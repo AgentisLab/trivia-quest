@@ -18,8 +18,9 @@
   --success: rgba(48, 209, 88, 0.92);
   --danger: rgba(255, 69, 58, 0.92);
 
-  --font-display: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
-  --font-text: "SF Pro Text", "SF Pro Display", -apple-system, system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-system: -apple-system, BlinkMacSystemFont, "SF Pro", system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-system);
+  --font-text: var(--font-system);
 }
 
 html, body {

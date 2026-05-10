@@ -18,6 +18,22 @@ export const ui: Record<string, Record<Lang, string>> = {
   randomMix: { en: "Random Mix", fr: "Mélange aléatoire" },
   randomMixDesc: { en: "All 12 categories", fr: "Toutes les catégories" },
 
+  // v5 editorial-feed strings
+  kickerFeatured: { en: "FEATURED", fr: "À LA UNE" },
+  kickerNew: { en: "NEW", fr: "NOUVEAU" },
+  kickerSection: { en: "CATEGORIES", fr: "CATÉGORIES" },
+  leadDek: {
+    en: "A balanced mix across all categories.",
+    fr: "Un mélange équilibré, toutes catégories confondues.",
+  },
+  metaNotPlayed: { en: "not played yet", fr: "jamais joué" },
+  metaLastPlayedPrefix: { en: "last played", fr: "dernière partie il y a" },
+  metaLastPlayedSuffix: { en: "ago", fr: "" },
+  unitMinutes: { en: "min", fr: "min" },
+  unitHours: { en: "h", fr: "h" },
+  unitDays: { en: "d", fr: "j" },
+  unitWeeks: { en: "w", fr: "sem" },
+
   questionsLabel: { en: "questions", fr: "questions" },
   questionsCount: { en: "Qs", fr: "Qs" },
   secondsEach: { en: "20s each", fr: "20 s chacune" },
@@ -33,10 +49,13 @@ export const ui: Record<string, Record<Lang, string>> = {
 
   // Game length
   gameLengthPickerLabel: { en: "Questions per round", fr: "Questions par partie" },
+  kickerLength: { en: "ROUND LENGTH", fr: "LONGUEUR DE LA PARTIE" },
 
   // Game
   question: { en: "Question", fr: "Question" },
   of: { en: "of", fr: "sur" },
+  questionOfTotalPrefix: { en: "Question", fr: "Question" },
+  questionOfTotalJoin: { en: "of", fr: "sur" },
   easy: { en: "Easy", fr: "Facile" },
   medium: { en: "Medium", fr: "Moyen" },
   hard: { en: "Hard", fr: "Difficile" },
@@ -52,6 +71,12 @@ export const ui: Record<string, Record<Lang, string>> = {
 
   // Results
   summary: { en: "Summary", fr: "Récap" },
+  kickerYouPlayed: { en: "YOU PLAYED", fr: "VOUS AVEZ JOUÉ" },
+  pullQuoteNearPerfect: { en: "A near-perfect run.", fr: "Une partie presque parfaite." },
+  pullQuoteConfident: { en: "A confident performance.", fr: "Une prestation solide." },
+  pullQuoteSolid: { en: "Solid play, a few slips.", fr: "Du bon jeu, quelques accrocs." },
+  pullQuoteAnotherGo: { en: "Worth another go.", fr: "À refaire." },
+  pullQuoteHardRound: { en: "The questions won this round.", fr: "Les questions ont gagné ce tour." },
   accuracy: { en: "accuracy", fr: "précision" },
   bestStreak: { en: "Best streak", fr: "Meilleure série" },
   inARow: { en: "in a row", fr: "d'affilée" },

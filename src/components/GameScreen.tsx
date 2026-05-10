@@ -4,8 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Lang, Question } from "@/data/types"
 import { ui } from "@/data/ui-strings"
 import { triggerHaptic } from "@/lib/preferences"
-import LiveActivityPill from "./LiveActivityPill"
-import { CheckIcon, CloseIcon, CrossIcon } from "./icons"
+import { CheckIcon, CloseIcon } from "./icons"
 
 type AnswerKey = "A" | "B" | "C" | "D"
 
@@ -24,13 +23,6 @@ interface Props {
   onQuit: () => void
 }
 
-const DIFFICULTY_PIPS: Record<Question["difficulty"], number> = {
-  easy: 1,
-  medium: 2,
-  hard: 3,
-  expert: 4,
-}
-
 const TIMER_DURATION = 20
 
 export default function GameScreen({
@@ -38,7 +30,6 @@ export default function GameScreen({
   question,
   questionIndex,
   totalQuestions,
-  streak,
   categoryName,
   selectedAnswer,
   showFeedback,
@@ -80,25 +71,35 @@ export default function GameScreen({
 
   const fillPercent = (Math.max(timeLeft, 0) / TIMER_DURATION) * 100
   const isLastSeconds = timeLeft <= 3 && timeLeft > 0 && !showFeedback
-  const difficultyPips = DIFFICULTY_PIPS[question.difficulty]
 
   return (
     <div
       className="relative flex min-h-screen flex-col"
       style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
     >
-      <div style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)" }}>
-        <LiveActivityPill
-          segments={[
-            { key: "cat", label: categoryName },
-            { key: "q", value: questionIndex + 1, label: `/ ${totalQuestions}` },
-            { key: "streak", value: streak, label: t("liveStreak") },
-          ]}
+      {/* Top horizontal pulse-bar timer (kept from v4) */}
+      <div
+        className="relative"
+        style={{
+          height: 3,
+          background: "rgba(255,255,255,0.08)",
+          overflow: "hidden",
+          marginTop: "env(safe-area-inset-top, 0px)",
+        }}
+      >
+        <div
+          className={isLastSeconds ? "timer-pulse" : undefined}
+          style={{
+            height: "100%",
+            width: `${fillPercent}%`,
+            background: isLastSeconds ? "var(--accent)" : "var(--ink-100)",
+            transition: "width 1s linear",
+          }}
         />
       </div>
 
       {/* Top bar — quiet X quit */}
-      <div className="flex items-center justify-between px-[18px] pt-3.5">
+      <div className="flex items-center justify-between px-[22px] pt-3.5">
         <button
           type="button"
           aria-label={t("quitConfirm")}
@@ -108,186 +109,122 @@ export default function GameScreen({
             width: 34,
             height: 34,
             borderRadius: "50%",
-            background: "var(--bg-2)",
-            border: "1px solid var(--separator)",
-            color: "var(--ink-100)",
+            background: "transparent",
+            border: 0,
+            color: "var(--ink-80)",
           }}
         >
-          <CloseIcon width={14} height={14} />
+          <CloseIcon width={18} height={18} />
         </button>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 600,
+            color: "var(--ink-60)",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {Math.max(timeLeft, 0)}s
+        </span>
         <div className="h-[34px] w-[34px]" aria-hidden />
       </div>
 
-      {/* Card stack */}
-      <div className="relative flex-1 overflow-hidden px-4 pb-10 pt-[18px]">
-        {/* Peek cards */}
-        <div
-          className="absolute"
+      {/* Editorial article body */}
+      <div className="flex flex-1 flex-col items-center px-[26px] pb-10 pt-10">
+        {/* Section kicker — Question N of M + category */}
+        <p
+          className="m-0 text-center"
           style={{
-            left: 30,
-            right: 30,
-            top: 580,
-            height: 32,
-            borderRadius: 22,
-            background: "var(--bg-1)",
-            border: "1px solid var(--separator)",
-            transform: "rotate(-1deg)",
-            zIndex: 1,
-          }}
-        />
-        <div
-          className="absolute"
-          style={{
-            left: 50,
-            right: 50,
-            top: 610,
-            height: 22,
-            borderRadius: 22,
-            background: "var(--bg-1)",
-            border: "1px solid var(--separator)",
-            transform: "rotate(1deg)",
-            opacity: 0.6,
-            zIndex: 1,
-          }}
-        />
-
-        {/* Active card */}
-        <div
-          className="relative"
-          style={{
-            zIndex: 3,
-            borderRadius: 24,
-            overflow: "hidden",
-            background: "var(--bg-2)",
-            border: "1px solid var(--separator)",
-            transform: "rotate(-1deg)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--ink-60)",
           }}
         >
-          {/* Horizontal timer */}
-          <div
-            className="relative"
-            style={{ height: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}
-          >
-            <div
-              className={isLastSeconds ? "timer-pulse" : undefined}
-              style={{
-                height: "100%",
-                width: `${fillPercent}%`,
-                background: "var(--ink-100)",
-                transition: "width 1s linear",
-              }}
-            />
-          </div>
+          <span style={{ color: "var(--accent)" }}>
+            {t("questionOfTotalPrefix")} {questionIndex + 1}
+          </span>
+          <span style={{ marginLeft: 8, marginRight: 8, color: "var(--ink-40)" }}>·</span>
+          <span>{categoryName}</span>
+        </p>
 
-          {/* Meta row */}
-          <div className="flex items-center justify-between px-5 pb-1 pt-4">
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "var(--ink-80)",
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
-            >
-              {categoryName}
-            </span>
-            <div
-              className="flex items-center gap-1.5"
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "var(--ink-60)",
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-              }}
-            >
-              {[1, 2, 3, 4].map((p) => (
-                <span
-                  key={p}
-                  style={{
-                    width: 5,
-                    height: 5,
-                    borderRadius: "50%",
-                    background: p <= difficultyPips ? "var(--ink-100)" : "rgba(255,255,255,0.18)",
-                  }}
-                />
-              ))}
-              <span style={{ marginLeft: 4 }}>{t(question.difficulty)}</span>
-            </div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                color: "var(--ink-80)",
-                fontVariantNumeric: "tabular-nums",
-                letterSpacing: "-0.005em",
-              }}
-            >
-              <b style={{ color: "var(--ink-100)", fontWeight: 700 }}>{Math.max(timeLeft, 0)}</b>s
-            </div>
-          </div>
+        {/* Question (editorial display) */}
+        <h1
+          className="mt-7"
+          style={{
+            margin: 0,
+            fontFamily: "var(--font-display)",
+            fontSize: 30,
+            fontWeight: 600,
+            letterSpacing: "-0.022em",
+            lineHeight: 1.25,
+            color: "var(--ink-100)",
+            textAlign: "center",
+            maxWidth: "32ch",
+          }}
+        >
+          {question.question[lang]}
+        </h1>
 
-          {/* Question */}
-          <h1
-            className="m-0"
-            style={{
-              padding: "14px 22px 22px",
-              fontFamily: "var(--font-display)",
-              fontSize: 26,
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-              lineHeight: 1.18,
-              color: "var(--ink-100)",
-            }}
-          >
-            {question.question[lang]}
-          </h1>
+        <p
+          className="m-0 mt-3"
+          style={{
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--ink-40)",
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {t(question.difficulty)}
+        </p>
 
-          {/* Options */}
-          <div className="flex flex-col gap-[9px] px-[18px] pb-5">
-            {(["A", "B", "C", "D"] as AnswerKey[]).map((key) => {
-              const isCorrect = key === question.answer
-              const isSelected = key === selectedAnswer
-              const reveal = showFeedback
-              const correctState = reveal && isCorrect
-              const wrongState = reveal && isSelected && !isCorrect
-              const dimmed = reveal && !correctState
-              return (
-                <AnswerOption
-                  key={key}
-                  answerKey={key}
-                  text={question.options[key][lang]}
-                  disabled={reveal}
-                  correctState={correctState}
-                  wrongState={wrongState}
-                  dimmed={dimmed}
-                  onClick={() => {
-                    if (!reveal) {
-                      triggerHaptic(8)
-                      onAnswer(key)
-                    }
-                  }}
-                />
-              )
-            })}
-          </div>
-        </div>
+        {/* Answers — text-forward, hairline-separated rows */}
+        <ul
+          className="m-0 mt-10 w-full list-none p-0"
+          style={{ maxWidth: 520, borderTop: "1px solid var(--separator)" }}
+        >
+          {(["A", "B", "C", "D"] as AnswerKey[]).map((key) => {
+            const isCorrect = key === question.answer
+            const isSelected = key === selectedAnswer
+            const reveal = showFeedback
+            const correctState = reveal && isCorrect
+            const wrongState = reveal && isSelected && !isCorrect
+            const dimmed = reveal && !correctState && !wrongState
+            return (
+              <AnswerRow
+                key={key}
+                answerKey={key}
+                text={question.options[key][lang]}
+                disabled={reveal}
+                correctState={correctState}
+                wrongState={wrongState}
+                dimmed={dimmed}
+                onClick={() => {
+                  if (!reveal) {
+                    triggerHaptic(8)
+                    onAnswer(key)
+                  }
+                }}
+              />
+            )
+          })}
+        </ul>
 
         {/* Hint */}
-        <div
-          className="pointer-events-none absolute left-0 right-0 text-center"
+        <p
+          className="m-0 mt-8 text-center"
           style={{
-            bottom: 24,
             color: "var(--ink-40)",
             fontSize: 12,
             fontWeight: 500,
             letterSpacing: "-0.005em",
-            zIndex: 5,
           }}
         >
           {showFeedback ? t("nextIn") : t("tapAnswer")}
-        </div>
+        </p>
       </div>
 
       {confirmQuit && (
@@ -304,7 +241,7 @@ export default function GameScreen({
   )
 }
 
-interface AnswerOptionProps {
+interface AnswerRowProps {
   answerKey: AnswerKey
   text: string
   disabled: boolean
@@ -314,7 +251,7 @@ interface AnswerOptionProps {
   onClick: () => void
 }
 
-function AnswerOption({
+function AnswerRow({
   answerKey,
   text,
   disabled,
@@ -322,71 +259,65 @@ function AnswerOption({
   wrongState,
   dimmed,
   onClick,
-}: AnswerOptionProps) {
-  const isReveal = correctState || wrongState
-  let bg = "var(--bg-3)"
-  let borderColor: string = "var(--separator)"
-  let keyBg = "rgba(255,255,255,0.06)"
-  let keyColor: string = "var(--ink-80)"
-  let keyBorder: string = "var(--separator)"
+}: AnswerRowProps) {
+  let textColor: string = "var(--ink-100)"
+  let prefixColor: string = "var(--ink-40)"
+  let opacity = 1
 
   if (correctState) {
-    bg = "rgba(48, 209, 88, 0.10)"
-    borderColor = "var(--success)"
-    keyBg = "var(--success)"
-    keyColor = "#003a14"
-    keyBorder = "transparent"
+    textColor = "var(--success)"
+    prefixColor = "var(--success)"
   } else if (wrongState) {
-    bg = "rgba(255, 69, 58, 0.08)"
-    borderColor = "rgba(255,69,58,0.55)"
-    keyBg = "var(--danger)"
-    keyColor = "#380a07"
-    keyBorder = "transparent"
+    textColor = "var(--danger)"
+    prefixColor = "var(--danger)"
+  } else if (dimmed) {
+    opacity = 0.3
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="press flex w-full items-center gap-3.5 text-left"
-      style={{
-        padding: "15px 18px",
-        borderRadius: 14,
-        background: bg,
-        border: `1px solid ${borderColor}`,
-        color: "var(--ink-100)",
-        fontSize: 16,
-        fontWeight: 500,
-        letterSpacing: "-0.01em",
-        opacity: dimmed && !isReveal ? 0.4 : dimmed ? 0.4 : 1,
-        cursor: disabled ? "default" : "pointer",
-      }}
-    >
-      <span
-        className="flex flex-shrink-0 items-center justify-center"
+    <li style={{ borderBottom: "1px solid var(--separator)" }}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className="press flex w-full items-center gap-4 text-left"
         style={{
-          width: 26,
-          height: 26,
-          borderRadius: 7,
-          background: keyBg,
-          color: keyColor,
-          border: `1px solid ${keyBorder}`,
-          fontSize: 12,
-          fontWeight: 600,
-          fontVariantNumeric: "tabular-nums",
+          padding: "18px 4px",
+          background: "transparent",
+          border: 0,
+          color: textColor,
+          fontSize: 17,
+          fontWeight: 500,
+          letterSpacing: "-0.01em",
+          lineHeight: 1.35,
+          opacity,
+          cursor: disabled ? "default" : "pointer",
+          transition: "color 180ms ease, opacity 180ms ease",
         }}
       >
-        {correctState ? (
-          <CheckIcon width={14} height={14} />
-        ) : wrongState ? (
-          <CrossIcon width={14} height={14} />
-        ) : (
-          answerKey
-        )}
-      </span>
-      <span className="flex-1">{text}</span>
-    </button>
+        <span
+          aria-hidden
+          className="flex flex-shrink-0 items-center justify-center"
+          style={{
+            width: 22,
+            height: 22,
+            color: prefixColor,
+            fontFamily: "var(--font-display)",
+            fontSize: 14,
+            fontWeight: 600,
+            letterSpacing: "-0.005em",
+            transition: "color 180ms ease",
+          }}
+        >
+          {correctState ? (
+            <CheckIcon width={16} height={16} />
+          ) : (
+            <span>{answerKey}.</span>
+          )}
+        </span>
+        <span className="flex-1">{text}</span>
+      </button>
+    </li>
   )
 }
 
@@ -481,4 +412,3 @@ function QuitSheet({ title, body, confirmLabel, cancelLabel, onConfirm, onCancel
     </div>
   )
 }
-

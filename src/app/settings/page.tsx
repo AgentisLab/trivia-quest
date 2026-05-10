@@ -69,14 +69,14 @@ export default function SettingsPage() {
         style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
       >
         <header
-          className="px-[22px]"
-          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+          className="px-[26px]"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 28px)" }}
         >
           <h1
             className="m-0"
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: 28,
+              fontSize: 34,
               fontWeight: 700,
               letterSpacing: "-0.025em",
               color: "var(--ink-100)",
@@ -86,39 +86,63 @@ export default function SettingsPage() {
           </h1>
         </header>
 
-        <div className="px-[22px] pb-[120px] pt-6">
-          <SectionHeader>{t("settingsLanguage")}</SectionHeader>
-          <Card>
+        <div className="px-[26px] pb-[120px] pt-8">
+          <Section kicker={t("settingsLanguage")}>
             <Row>
-              <span style={{ fontSize: 15, color: "var(--ink-100)" }}>{t("settingsLanguage")}</span>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: "var(--ink-80)",
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {t("settingsLanguage")}
+              </span>
               <LangToggle lang={lang} onChange={handleLang} size="sm" />
             </Row>
-          </Card>
+          </Section>
 
-          <SectionHeader>{t("settingsGameplay")}</SectionHeader>
-          <Card>
+          <Section kicker={t("settingsGameplay")}>
             <Row>
-              <span style={{ fontSize: 15, color: "var(--ink-100)" }}>{t("settingsSound")}</span>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: "var(--ink-80)",
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {t("settingsSound")}
+              </span>
               <IOSSwitch checked={sound} onChange={handleSound} ariaLabel={t("settingsSound")} />
             </Row>
             <Row last>
-              <span style={{ fontSize: 15, color: "var(--ink-100)" }}>{t("settingsHaptics")}</span>
+              <span
+                style={{
+                  fontSize: 15,
+                  fontWeight: 500,
+                  color: "var(--ink-80)",
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {t("settingsHaptics")}
+              </span>
               <IOSSwitch
                 checked={haptics}
                 onChange={handleHaptics}
                 ariaLabel={t("settingsHaptics")}
               />
             </Row>
-          </Card>
+          </Section>
 
-          <SectionHeader>{t("settingsData")}</SectionHeader>
-          <Card>
+          <Section kicker={t("settingsData")}>
             <button
               type="button"
               onClick={handleResetStats}
               className="press w-full text-left"
               style={{
-                padding: "14px 16px",
+                padding: "16px 0",
                 background: "transparent",
                 border: 0,
                 color: "var(--danger)",
@@ -129,7 +153,7 @@ export default function SettingsPage() {
             >
               {t("settingsResetStats")}
             </button>
-          </Card>
+          </Section>
         </div>
       </div>
       <TabBar />
@@ -137,35 +161,29 @@ export default function SettingsPage() {
   )
 }
 
-function SectionHeader({ children }: { children: React.ReactNode }) {
+function Section({
+  kicker,
+  children,
+}: {
+  kicker: string
+  children: React.ReactNode
+}) {
   return (
-    <div
-      className="mx-1 mb-2 mt-6"
-      style={{
-        fontSize: 12,
-        fontWeight: 600,
-        color: "var(--ink-60)",
-        letterSpacing: "0.04em",
-        textTransform: "uppercase",
-      }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function Card({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: "var(--bg-2)",
-        border: "1px solid var(--separator)",
-        borderRadius: 16,
-        overflow: "hidden",
-      }}
-    >
-      {children}
-    </div>
+    <section className="mt-9 first:mt-0">
+      <p
+        className="m-0 mb-3"
+        style={{
+          fontSize: 11,
+          fontWeight: 600,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+          color: "var(--ink-60)",
+        }}
+      >
+        {kicker}
+      </p>
+      <div style={{ borderTop: "1px solid var(--separator)" }}>{children}</div>
+    </section>
   )
 }
 
@@ -174,7 +192,7 @@ function Row({ children, last = false }: { children: React.ReactNode; last?: boo
     <div
       className="flex items-center justify-between"
       style={{
-        padding: "12px 16px",
+        padding: "14px 0",
         minHeight: 50,
         borderBottom: last ? "none" : "1px solid var(--separator)",
       }}

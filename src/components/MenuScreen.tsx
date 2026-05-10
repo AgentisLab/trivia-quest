@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useMemo } from "react"
+import { useEffect, useState } from "react"
 import { Lang } from "@/data/types"
 import { Category, categories } from "@/data/questions"
 import { ui } from "@/data/ui-strings"
@@ -8,7 +8,6 @@ import { GameLength, GAME_LENGTHS } from "@/lib/preferences"
 import { TriviaStats, emptyStats, loadStats } from "@/lib/stats"
 import LiveActivityPill from "./LiveActivityPill"
 import SegmentedControl from "./SegmentedControl"
-import { CategoryIcon, PlaySolidIcon } from "./icons"
 
 interface Props {
   lang: Lang
@@ -19,14 +18,38 @@ interface Props {
   randomMixCount: number
 }
 
-const TRENDING_IDS = [11, 1] as const
-const SPOTLIGHT_ID = 12
+const NEW_CATEGORY_IDS = new Set<number>([11, 12])
 
 function greetingKey(): "greetingMorning" | "greetingAfternoon" | "greetingEvening" {
   const h = new Date().getHours()
   if (h < 12) return "greetingMorning"
   if (h < 18) return "greetingAfternoon"
   return "greetingEvening"
+}
+
+function formatRelative(ms: number, lang: Lang, t: (key: string) => string): string {
+  const diff = Math.max(0, Date.now() - ms)
+  const minutes = Math.floor(diff / 60_000)
+  if (minutes < 1) return lang === "fr" ? "à l'instant" : "just now"
+  let n: number
+  let unit: string
+  if (minutes < 60) {
+    n = minutes
+    unit = t("unitMinutes")
+  } else if (minutes < 60 * 24) {
+    n = Math.floor(minutes / 60)
+    unit = t("unitHours")
+  } else if (minutes < 60 * 24 * 7) {
+    n = Math.floor(minutes / (60 * 24))
+    unit = t("unitDays")
+  } else {
+    n = Math.floor(minutes / (60 * 24 * 7))
+    unit = t("unitWeeks")
+  }
+  if (lang === "fr") {
+    return `${t("metaLastPlayedPrefix")} ${n} ${unit}`
+  }
+  return `${t("metaLastPlayedPrefix")} ${n}${unit} ${t("metaLastPlayedSuffix")}`
 }
 
 export default function MenuScreen({
@@ -44,19 +67,8 @@ export default function MenuScreen({
     setStats(loadStats())
   }, [])
 
-  const trending = TRENDING_IDS.map((id) => categories.find((c) => c.id === id)).filter(
-    (c): c is Category => Boolean(c)
-  )
-  const spotlight = categories.find((c) => c.id === SPOTLIGHT_ID)
-  const standard = useMemo(
-    () =>
-      categories.filter(
-        (c) => !TRENDING_IDS.includes(c.id as 11 | 1) && c.id !== SPOTLIGHT_ID
-      ),
-    []
-  )
-
   const greeting = t(greetingKey())
+  const questionsLabel = t("questionsLabel")
 
   return (
     <div
@@ -72,9 +84,9 @@ export default function MenuScreen({
         />
       </div>
 
-      <header className="px-[22px] pt-6 pb-2">
+      <header className="px-[26px] pt-7 pb-1">
         <p
-          className="m-0 mb-1.5"
+          className="m-0 mb-2"
           style={{
             fontSize: 13,
             fontWeight: 500,
@@ -88,7 +100,7 @@ export default function MenuScreen({
           className="m-0"
           style={{
             fontFamily: "var(--font-display)",
-            fontSize: 32,
+            fontSize: 34,
             fontWeight: 700,
             letterSpacing: "-0.025em",
             lineHeight: 1.05,
@@ -99,357 +111,218 @@ export default function MenuScreen({
         </h1>
       </header>
 
-      <div className="flex-1 px-[18px] pb-[120px]">
-        {/* Game length picker */}
-        <div className="mb-2 mt-3">
-          <SectionLabel left={t("gameLengthPickerLabel")} right={`${gameLength} ${t("questionsLabel")}`} />
-          <SegmentedControl
-            ariaLabel={t("gameLengthPickerLabel")}
-            value={gameLength}
-            onChange={onGameLengthChange}
-            options={GAME_LENGTHS.map((n) => ({ value: n, label: String(n) }))}
-          />
+      <div className="flex-1 px-[26px] pb-[120px]">
+        {/* Length picker — editorial kicker, no card chrome */}
+        <div className="mt-7 mb-2">
+          <Kicker>{t("kickerLength")}</Kicker>
+          <div className="mt-3">
+            <SegmentedControl
+              ariaLabel={t("gameLengthPickerLabel")}
+              value={gameLength}
+              onChange={onGameLengthChange}
+              options={GAME_LENGTHS.map((n) => ({ value: n, label: String(n) }))}
+            />
+          </div>
         </div>
 
-        {/* Featured */}
-        <SectionLabel left={t("sectionFeatured")} right={`${randomMixCount} ${t("questionsLabel")}`} />
-        <button
-          type="button"
-          onClick={onRandomMix}
-          className="press w-full text-left"
+        {/* Lead story — Random Mix */}
+        <div
+          className="mt-9"
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "18px",
-            height: 128,
-            borderRadius: 20,
-            background: "linear-gradient(180deg, #1a1a1c 0%, #0e0e10 100%)",
-            border: "1px solid var(--separator)",
-            color: "inherit",
+            borderTop: "1px solid var(--separator)",
+            borderBottom: "1px solid var(--separator)",
           }}
         >
-          <div className="flex min-w-0 flex-col gap-1">
-            <p
-              className="m-0 mb-1"
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                color: "var(--ink-60)",
-              }}
-            >
-              {t("recommended")}
-            </p>
-            <p
-              className="m-0"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 22,
-                fontWeight: 700,
-                letterSpacing: "-0.02em",
-                color: "var(--ink-100)",
-                lineHeight: 1.1,
-              }}
-            >
-              {t("randomMix")}
-            </p>
-            <p
-              className="m-0 mt-1"
-              style={{
-                fontSize: 13,
-                fontWeight: 500,
-                color: "var(--ink-60)",
-                letterSpacing: "-0.005em",
-              }}
-            >
-              {t("randomMixDesc")}
-            </p>
-          </div>
-          <span
-            aria-hidden
-            className="flex flex-shrink-0 items-center justify-center"
+          <button
+            type="button"
+            onClick={onRandomMix}
+            className="press w-full text-left"
             style={{
-              width: 44,
-              height: 44,
-              borderRadius: "50%",
-              background: "var(--accent)",
-              color: "#fff",
+              padding: "26px 0 28px",
+              background: "transparent",
+              border: 0,
+              color: "inherit",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 16,
             }}
           >
-            <PlaySolidIcon width={16} height={16} style={{ marginLeft: 2 }} />
-          </span>
-        </button>
-
-        {/* Trending */}
-        <SectionLabel left={t("sectionTrending")} />
-        <div className="grid grid-cols-2 gap-2.5">
-          {trending.map((cat, i) => (
-            <MediumTile
-              key={cat.id}
-              cat={cat}
-              lang={lang}
-              tag={i === 0 ? t("trendingNumberOne") : t("trendingTag")}
-              onClick={() => onSelectCategory(cat)}
-              t={t}
-            />
-          ))}
+            <div className="min-w-0 flex-1">
+              <p
+                className="m-0 mb-2"
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--accent)",
+                }}
+              >
+                {t("kickerFeatured")}
+              </p>
+              <h2
+                className="m-0"
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 38,
+                  fontWeight: 700,
+                  letterSpacing: "-0.028em",
+                  lineHeight: 1.04,
+                  color: "var(--ink-100)",
+                }}
+              >
+                {t("randomMix")}
+              </h2>
+              <p
+                className="m-0 mt-2.5"
+                style={{
+                  fontSize: 16,
+                  fontWeight: 400,
+                  color: "var(--ink-80)",
+                  lineHeight: 1.5,
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {t("leadDek")}
+              </p>
+              <p
+                className="m-0 mt-3"
+                style={{
+                  fontSize: 13,
+                  fontWeight: 500,
+                  color: "var(--ink-60)",
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {randomMixCount} {questionsLabel}
+              </p>
+            </div>
+            <Chevron />
+          </button>
         </div>
 
-        {/* All categories */}
-        <SectionLabel left={t("sectionAll")} right={String(categories.length)} />
-        <div className="grid grid-cols-2 gap-2.5">
-          {standard.map((cat) => (
-            <StandardTile
-              key={cat.id}
-              cat={cat}
-              lang={lang}
-              onClick={() => onSelectCategory(cat)}
-              t={t}
-            />
-          ))}
-          {spotlight && (
-            <SpotlightTile
-              cat={spotlight}
-              lang={lang}
-              onClick={() => onSelectCategory(spotlight)}
-              t={t}
-            />
-          )}
+        {/* Section kicker */}
+        <div className="mt-8 mb-1">
+          <Kicker>{t("kickerSection")}</Kicker>
         </div>
+
+        {/* Story cards */}
+        <ul className="m-0 list-none p-0">
+          {categories.map((cat, i) => {
+            const s = stats.perCategory[cat.id]
+            const isNew = NEW_CATEGORY_IDS.has(cat.id)
+            const meta =
+              s && s.lastPlayedAt
+                ? formatRelative(s.lastPlayedAt, lang, t)
+                : t("metaNotPlayed")
+            return (
+              <li
+                key={cat.id}
+                style={{
+                  borderTop: i === 0 ? "1px solid var(--separator)" : "none",
+                  borderBottom: "1px solid var(--separator)",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => onSelectCategory(cat)}
+                  className="press w-full text-left"
+                  style={{
+                    padding: "20px 0 22px",
+                    background: "transparent",
+                    border: 0,
+                    color: "inherit",
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 16,
+                  }}
+                >
+                  <div className="min-w-0 flex-1">
+                    <h3
+                      className="m-0 flex flex-wrap items-baseline gap-x-2.5 gap-y-1"
+                      style={{
+                        fontFamily: "var(--font-display)",
+                        fontSize: 28,
+                        fontWeight: 700,
+                        letterSpacing: "-0.022em",
+                        lineHeight: 1.08,
+                        color: "var(--ink-100)",
+                      }}
+                    >
+                      <span>{cat.name[lang]}</span>
+                      {isNew && (
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 700,
+                            letterSpacing: "0.1em",
+                            textTransform: "uppercase",
+                            color: "var(--accent)",
+                            position: "relative",
+                            top: -3,
+                          }}
+                        >
+                          {t("kickerNew")}
+                        </span>
+                      )}
+                    </h3>
+                    <p
+                      className="m-0 mt-2"
+                      style={{
+                        fontSize: 13,
+                        fontWeight: 500,
+                        color: "var(--ink-60)",
+                        letterSpacing: "-0.005em",
+                      }}
+                    >
+                      {cat.questions.length} {questionsLabel} · {meta}
+                    </p>
+                  </div>
+                  <Chevron muted />
+                </button>
+              </li>
+            )
+          })}
+        </ul>
       </div>
     </div>
   )
 }
 
-function SectionLabel({ left, right }: { left: string; right?: string }) {
+function Kicker({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mx-1 mb-2.5 mt-[18px] flex items-baseline justify-between">
-      <span
-        style={{
-          fontSize: 12,
-          fontWeight: 600,
-          color: "var(--ink-60)",
-          letterSpacing: "-0.005em",
-        }}
-      >
-        {left}
-      </span>
-      {right && (
-        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-60)" }}>{right}</span>
-      )}
-    </div>
+    <span
+      style={{
+        display: "block",
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        color: "var(--ink-60)",
+      }}
+    >
+      {children}
+    </span>
   )
 }
 
-interface TileProps {
-  cat: Category
-  lang: Lang
-  onClick: () => void
-  t: (key: string) => string
-}
-
-function MediumTile({ cat, lang, tag, onClick }: TileProps & { tag: string }) {
+function Chevron({ muted = false }: { muted?: boolean }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press text-left"
+    <span
+      aria-hidden
+      className="flex flex-shrink-0 items-center justify-center"
       style={{
-        height: 118,
-        padding: 14,
-        borderRadius: 18,
-        background: "var(--bg-2)",
-        border: "1px solid var(--separator)",
-        color: "inherit",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
+        marginTop: 6,
+        color: muted ? "var(--ink-40)" : "var(--ink-60)",
+        fontFamily: "var(--font-display)",
+        fontSize: 22,
+        fontWeight: 300,
+        lineHeight: 1,
       }}
     >
-      <div className="flex items-start justify-between">
-        <span
-          className="flex items-center justify-center"
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 9,
-            background: "var(--bg-3)",
-            color: "var(--ink-100)",
-          }}
-        >
-          <CategoryIcon id={cat.id} width={16} height={16} />
-        </span>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 600,
-            color: "var(--ink-60)",
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-          }}
-        >
-          {tag}
-        </span>
-      </div>
-      <div>
-        <p
-          className="m-0"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 17,
-            fontWeight: 600,
-            letterSpacing: "-0.015em",
-            color: "var(--ink-100)",
-            lineHeight: 1.1,
-          }}
-        >
-          {cat.name[lang]}
-        </p>
-        <p
-          className="m-0 mt-1"
-          style={{
-            fontSize: 12,
-            fontWeight: 500,
-            color: "var(--ink-60)",
-            letterSpacing: "-0.005em",
-          }}
-        >
-          {cat.questions.length} Qs
-        </p>
-      </div>
-    </button>
-  )
-}
-
-function StandardTile({ cat, lang, onClick }: TileProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press text-left"
-      style={{
-        height: 104,
-        padding: 13,
-        borderRadius: 16,
-        background: "var(--bg-2)",
-        border: "1px solid var(--separator)",
-        color: "inherit",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-    >
-      <span
-        className="flex items-center justify-center"
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: 8,
-          background: "var(--bg-3)",
-          color: "var(--ink-100)",
-        }}
-      >
-        <CategoryIcon id={cat.id} width={15} height={15} />
-      </span>
-      <div>
-        <p
-          className="m-0"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 15,
-            fontWeight: 600,
-            letterSpacing: "-0.012em",
-            color: "var(--ink-100)",
-            lineHeight: 1.1,
-          }}
-        >
-          {cat.name[lang]}
-        </p>
-        <p
-          className="m-0 mt-0.5"
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: "var(--ink-60)",
-            letterSpacing: "-0.005em",
-          }}
-        >
-          {cat.questions.length} Qs
-        </p>
-      </div>
-    </button>
-  )
-}
-
-function SpotlightTile({ cat, lang, onClick, t }: TileProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press col-span-2 text-left"
-      style={{
-        height: 90,
-        padding: 13,
-        borderRadius: 16,
-        background: "var(--bg-2)",
-        border: "1px solid var(--separator)",
-        color: "inherit",
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-      }}
-    >
-      <span
-        className="flex flex-shrink-0 items-center justify-center"
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 9,
-          background: "var(--bg-3)",
-          color: "var(--ink-100)",
-        }}
-      >
-        <CategoryIcon id={cat.id} width={17} height={17} />
-      </span>
-      <div className="min-w-0 flex-1">
-        <p
-          className="m-0"
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 15,
-            fontWeight: 600,
-            letterSpacing: "-0.012em",
-            color: "var(--ink-100)",
-            lineHeight: 1.1,
-          }}
-        >
-          {cat.name[lang]}
-        </p>
-        <p
-          className="m-0 mt-0.5"
-          style={{
-            fontSize: 11,
-            fontWeight: 500,
-            color: "var(--ink-60)",
-            letterSpacing: "-0.005em",
-          }}
-        >
-          {cat.questions.length} Qs · {t("addedThisWeek")}
-        </p>
-      </div>
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 600,
-          color: "var(--accent)",
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}
-      >
-        {t("newTag")}
-      </span>
-    </button>
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    </span>
   )
 }

@@ -3,6 +3,7 @@ export interface CategoryStats {
   correct: number
   total: number
   best: number
+  lastPlayedAt?: number
 }
 
 export interface TriviaStats {
@@ -79,6 +80,7 @@ export function recordGame({ categoryId, correct, total, score }: RecordGameInpu
       correct: existing.correct + correct,
       total: existing.total + total,
       best: Math.max(existing.best, score),
+      lastPlayedAt: Date.now(),
     }
   }
 

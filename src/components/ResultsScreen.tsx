@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react"
 import { Lang, Question } from "@/data/types"
 import { ui } from "@/data/ui-strings"
 import { TriviaStats, emptyStats, loadStats } from "@/lib/stats"
-import { CloseIcon, PlaySolidIcon } from "./icons"
 
 interface AnswerRecord {
   question: Question
@@ -24,6 +23,14 @@ interface Props {
 }
 
 const ORDER: Question["difficulty"][] = ["easy", "medium", "hard", "expert"]
+
+function pullQuoteKey(pct: number): string {
+  if (pct >= 95) return "pullQuoteNearPerfect"
+  if (pct >= 80) return "pullQuoteConfident"
+  if (pct >= 60) return "pullQuoteSolid"
+  if (pct >= 40) return "pullQuoteAnotherGo"
+  return "pullQuoteHardRound"
+}
 
 export default function ResultsScreen({
   lang,
@@ -45,6 +52,7 @@ export default function ResultsScreen({
   const correct = answers.filter((a) => a.correct).length
   const total = answers.length
   const accuracyPct = total > 0 ? Math.round((correct / total) * 100) : 0
+  const pullQuote = t(pullQuoteKey(accuracyPct))
 
   const breakdown = useMemo(
     () =>
@@ -59,11 +67,12 @@ export default function ResultsScreen({
     [answers]
   )
 
-  const dateLine = useMemo(() => formatDate(new Date(), lang), [lang])
   const timeText = formatDuration(totalElapsedMs, lang)
   const avgText = formatAverage(totalElapsedMs, total, lang)
 
-  const headerKicker = difficultyLabel ? `${categoryName} · ${difficultyLabel}` : categoryName
+  const headerKicker = difficultyLabel
+    ? `${categoryName} · ${difficultyLabel}`
+    : categoryName
 
   return (
     <div
@@ -71,71 +80,27 @@ export default function ResultsScreen({
       style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
     >
       <div
-        className="flex items-center justify-between px-[18px]"
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+        className="flex flex-1 flex-col px-[26px] pb-[170px]"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 36px)" }}
       >
-        <button
-          type="button"
-          onClick={onChooseAnother}
-          aria-label={t("chooseAnother")}
-          className="press flex items-center justify-center"
+        {/* Kicker — YOU PLAYED · category */}
+        <p
+          className="m-0"
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: "50%",
-            background: "var(--bg-2)",
-            border: "1px solid var(--separator)",
-            color: "var(--ink-100)",
-          }}
-        >
-          <CloseIcon width={14} height={14} />
-        </button>
-        <div
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: 16,
+            fontSize: 11,
             fontWeight: 600,
-            color: "var(--ink-100)",
-            letterSpacing: "-0.01em",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "var(--ink-60)",
           }}
         >
-          {t("summary")}
-        </div>
-        <div className="h-[34px] w-[34px]" aria-hidden />
-      </div>
+          <span style={{ color: "var(--accent)" }}>{t("kickerYouPlayed")}</span>
+          <span style={{ marginLeft: 8, marginRight: 8, color: "var(--ink-40)" }}>·</span>
+          <span>{headerKicker}</span>
+        </p>
 
-      <div className="flex flex-1 flex-col px-[26px] pb-[170px] pt-9">
-        <div className="mb-7 flex flex-col gap-2">
-          <p
-            className="m-0"
-            style={{
-              fontSize: 12,
-              fontWeight: 500,
-              letterSpacing: "-0.005em",
-              color: "var(--ink-60)",
-            }}
-          >
-            {headerKicker}
-          </p>
-          <h1
-            className="m-0"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 28,
-              fontWeight: 700,
-              letterSpacing: "-0.025em",
-              lineHeight: 1.1,
-              color: "var(--ink-100)",
-            }}
-          >
-            {dateLine}
-          </h1>
-        </div>
-
-        <div
-          className="mb-6 flex items-end gap-3.5 pb-6"
-          style={{ borderBottom: "1px solid var(--separator)" }}
-        >
+        {/* Score — editorial display */}
+        <div className="mt-5 flex items-baseline gap-3">
           <span
             style={{
               fontFamily: "var(--font-display)",
@@ -152,86 +117,85 @@ export default function ResultsScreen({
           <span
             style={{
               fontFamily: "var(--font-display)",
-              fontSize: 24,
+              fontSize: 26,
               fontWeight: 600,
               letterSpacing: "-0.02em",
-              color: "var(--ink-60)",
-              marginBottom: 8,
+              color: "var(--ink-40)",
             }}
           >
             / {total}
           </span>
-          <div className="ml-auto flex flex-col items-end" style={{ marginBottom: 6 }}>
-            <p
-              className="m-0"
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 22,
-                fontWeight: 600,
-                letterSpacing: "-0.02em",
-                color: "var(--success)",
-                fontVariantNumeric: "tabular-nums",
-                lineHeight: 1,
-              }}
-            >
-              {accuracyPct}%
-            </p>
-            <p
-              className="m-0"
-              style={{
-                fontSize: 11,
-                fontWeight: 500,
-                color: "var(--ink-60)",
-                letterSpacing: "-0.005em",
-                marginTop: 2,
-              }}
-            >
-              {t("accuracy")}
-            </p>
-          </div>
         </div>
 
-        <StatRow label={t("bestStreak")} value={`${bestStreak} ${t("inARow")}`} />
-        <StatRow label={t("totalTime")} value={timeText} />
-        <StatRow label={t("avgPerQuestion")} value={avgText} />
-        <StatRow
-          label={t("dayStreakLabel")}
-          value={`${stats.currentStreak} ${t("daysUnit")}`}
-          last
-        />
+        {/* Pull quote */}
+        <p
+          className="m-0 mt-4"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 500,
+            color: "var(--ink-80)",
+            letterSpacing: "-0.018em",
+            lineHeight: 1.3,
+            maxWidth: "28ch",
+          }}
+        >
+          {pullQuote}
+        </p>
 
-        <div className="mt-2">
+        {/* Stats — hairline rows */}
+        <div
+          className="mt-9"
+          style={{ borderTop: "1px solid var(--separator)" }}
+        >
+          <StatRow label={t("accuracy")} value={`${accuracyPct}%`} />
+          <StatRow label={t("bestStreak")} value={`${bestStreak} ${t("inARow")}`} />
+          <StatRow label={t("totalTime")} value={timeText} />
+          <StatRow label={t("avgPerQuestion")} value={avgText} />
+          <StatRow
+            label={t("dayStreakLabel")}
+            value={`${stats.currentStreak} ${t("daysUnit")}`}
+            last
+          />
+        </div>
+
+        {/* By difficulty */}
+        <div className="mt-8">
           <p
             className="m-0 mb-3"
             style={{
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: 600,
               color: "var(--ink-60)",
-              letterSpacing: "0.04em",
+              letterSpacing: "0.08em",
               textTransform: "uppercase",
             }}
           >
             {t("byDifficulty")}
           </p>
-          {breakdown.map((row) => (
-            <BarRow
-              key={row.difficulty}
-              label={t(row.difficulty)}
-              got={row.got}
-              total={row.total}
-            />
-          ))}
+          <div style={{ borderTop: "1px solid var(--separator)" }}>
+            {breakdown.map((row, i) => (
+              <BarRow
+                key={row.difficulty}
+                label={t(row.difficulty)}
+                got={row.got}
+                total={row.total}
+                last={i === breakdown.length - 1}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
+      {/* CTAs */}
       <div
-        className="absolute left-[18px] right-[18px] z-10 flex flex-col gap-2"
+        className="absolute left-[22px] right-[22px] z-10 flex flex-col gap-2"
         style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 28px)" }}
       >
         <button
           type="button"
           onClick={onPlayAgain}
-          className="press flex items-center justify-center gap-2"
+          className="press flex items-center justify-center"
           style={{
             height: 52,
             borderRadius: 14,
@@ -244,7 +208,6 @@ export default function ResultsScreen({
             border: 0,
           }}
         >
-          <PlaySolidIcon width={16} height={16} />
           {t("playAgain")}
         </button>
         <button
@@ -274,7 +237,7 @@ function StatRow({ label, value, last = false }: { label: string; value: string;
     <div
       className="flex items-center justify-between"
       style={{
-        padding: "14px 0",
+        padding: "16px 0",
         borderBottom: last ? "none" : "1px solid var(--separator)",
       }}
     >
@@ -304,10 +267,26 @@ function StatRow({ label, value, last = false }: { label: string; value: string;
   )
 }
 
-function BarRow({ label, got, total }: { label: string; got: number; total: number }) {
+function BarRow({
+  label,
+  got,
+  total,
+  last = false,
+}: {
+  label: string
+  got: number
+  total: number
+  last?: boolean
+}) {
   const pct = total > 0 ? (got / total) * 100 : 0
   return (
-    <div className="flex items-center gap-3" style={{ padding: "10px 0" }}>
+    <div
+      className="flex items-center gap-3"
+      style={{
+        padding: "14px 0",
+        borderBottom: last ? "none" : "1px solid var(--separator)",
+      }}
+    >
       <span
         style={{
           fontSize: 13,
@@ -354,22 +333,6 @@ function BarRow({ label, got, total }: { label: string; got: number; total: numb
       </span>
     </div>
   )
-}
-
-function formatDate(date: Date, lang: Lang): string {
-  const enFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date)
-  const time = new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: lang === "en",
-  }).format(date)
-  if (lang === "fr") {
-    const frFmt = new Intl.DateTimeFormat("fr-CA", { month: "long", day: "numeric" })
-      .format(date)
-      .replace(/^0+/, "")
-    return `${frFmt} · ${time.replace(":", " h ")}`
-  }
-  return `${enFmt} · ${time}`
 }
 
 function formatDuration(ms: number, lang: Lang): string {

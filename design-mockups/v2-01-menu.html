@@ -1,0 +1,855 @@
+<!doctype html>
+<!--
+  Canadian Trivia Quest — Menu (v2: "Apple Arcade" direction)
+  -----------------------------------------------------------
+  v1 was rejected as "too basic / Settings-app-feeling". v2 throws out the grouped table
+  and the muted palette. Each of 12 categories now owns a custom iOS-system-color gradient
+  card; Random Mix is a full-bleed dark hero with maple particles and a glowing CTA. The
+  page header is a deep blue→purple gradient (Apple Arcade hero treatment), with the title
+  rendered in 38/800 SF Pro Rounded for a playful-premium feel. Cards lift on press with
+  spring physics. Bottom tab bar uses a gradient highlight on the active tab. Bilingual:
+  twin EN/FR frames so layout stress-tests on the longer FR strings.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Canadian Trivia Quest — v2 Menu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    /* iOS system palette — light mode background */
+    --ios-bg: #f2f2f7;
+    --ios-surface: #ffffff;
+    --ios-label: #000000;
+    --ios-label-secondary: #3c3c4399;
+    --ios-label-tertiary: #3c3c434c;
+    --ios-separator: #3c3c4329;
+    --ios-fill-tertiary: #76768028;
+
+    /* iOS system colors (the v2 palette) */
+    --sys-red: #ff3b30;
+    --sys-red-deep: #d70015;
+    --sys-orange: #ff9500;
+    --sys-orange-deep: #c93400;
+    --sys-yellow: #ffcc00;
+    --sys-green: #34c759;
+    --sys-green-deep: #248a3d;
+    --sys-mint: #00c7be;
+    --sys-mint-deep: #0c817b;
+    --sys-teal: #30b0c7;
+    --sys-teal-deep: #008299;
+    --sys-cyan: #32ade6;
+    --sys-blue: #007aff;
+    --sys-blue-deep: #0040dd;
+    --sys-indigo: #5856d6;
+    --sys-indigo-deep: #3634a3;
+    --sys-purple: #af52de;
+    --sys-purple-deep: #8944ab;
+    --sys-pink: #ff2d55;
+    --sys-pink-deep: #d30f45;
+    --sys-magenta: #e94e8b;
+    --sys-brown: #a2845e;
+    --sys-brown-deep: #7f6545;
+
+    /* Canadian accent (still present, used as ribbon + maple) */
+    --ca-red: #d52b1e;
+    --ca-red-deep: #b32014;
+
+    /* Type scale */
+    --type-display: 38px;
+    --type-title-1: 28px;
+    --type-title-2: 22px;
+    --type-headline: 17px;
+    --type-body: 17px;
+    --type-callout: 16px;
+    --type-subhead: 15px;
+    --type-footnote: 13px;
+    --type-caption-1: 12px;
+    --type-caption-2: 11px;
+
+    --radius-card: 22px;
+    --radius-tile: 26px;
+    --radius-button: 14px;
+    --radius-pill: 999px;
+
+    --shadow-card: 0 1px 2px rgba(15, 15, 25, 0.06), 0 8px 24px rgba(15, 15, 25, 0.08);
+    --shadow-card-hover: 0 4px 6px rgba(15, 15, 25, 0.08), 0 18px 36px rgba(15, 15, 25, 0.14);
+    --shadow-hero: 0 12px 32px rgba(40, 22, 90, 0.32), 0 4px 12px rgba(15, 15, 25, 0.10);
+    --shadow-tabbar: 0 -1px 0 rgba(60, 60, 67, 0.12);
+
+    --font-rounded: "SF Pro Rounded", -apple-system, ui-rounded, "Nunito", system-ui, sans-serif;
+    --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Nunito", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-system);
+    background: #e5e5ea;
+    color: var(--ios-label);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+    min-height: 100vh;
+  }
+
+  /* Phone-frame review canvas */
+  .review {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 32px;
+    padding: 48px 24px 80px;
+  }
+  .review-header {
+    text-align: center; max-width: 760px;
+  }
+  .review-header h1 {
+    font-family: var(--font-rounded);
+    font-size: 24px; font-weight: 800; margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .review-header p {
+    font-size: 14px; color: #6e6e73; margin: 0;
+  }
+  .frames {
+    display: flex; flex-wrap: wrap; gap: 48px; justify-content: center;
+  }
+  .frame {
+    width: 414px; height: 868px;
+    border-radius: 56px;
+    background: #0b0b0d;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(15, 15, 25, 0.18), 0 8px 24px rgba(15, 15, 25, 0.10);
+    position: relative;
+  }
+  .frame::after {
+    content: ""; position: absolute;
+    top: 22px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 36px;
+    background: #0b0b0d; border-radius: 22px; z-index: 100;
+  }
+  .frame-screen {
+    width: 100%; height: 100%;
+    border-radius: 44px; overflow: hidden;
+    background: var(--ios-bg);
+    position: relative;
+  }
+  .frame-label {
+    text-align: center; color: #6e6e73;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-top: 16px;
+  }
+
+  /* App */
+  .app {
+    height: 100%;
+    display: flex; flex-direction: column;
+    background: var(--ios-bg);
+    position: relative;
+  }
+
+  /* Status bar (white text, sits over hero) */
+  .status-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 54px; padding: 18px 28px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 15px; font-weight: 600;
+    color: #ffffff;
+    z-index: 20;
+  }
+  .status-bar .icons { display: flex; align-items: center; gap: 6px; }
+
+  /* Scroll body */
+  .scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 110px;
+  }
+
+  /* ----------------------------------------------------------- */
+  /* HERO HEADER — deep blue→purple gradient (Apple Arcade vibe) */
+  /* ----------------------------------------------------------- */
+  .hero {
+    position: relative;
+    padding: 76px 22px 28px;
+    background:
+      radial-gradient(120% 80% at 80% 0%, rgba(255, 64, 100, 0.45) 0%, transparent 55%),
+      radial-gradient(100% 80% at 0% 30%, rgba(0, 122, 255, 0.55) 0%, transparent 60%),
+      linear-gradient(160deg, #1a1148 0%, #2c1769 45%, #4a1d8c 100%);
+    color: #ffffff;
+    border-radius: 0 0 32px 32px;
+    overflow: hidden;
+  }
+  /* Subtle floating maple leaves in hero (decorative but on-brand) */
+  .hero::before {
+    content: "🍁";
+    position: absolute;
+    top: 60px; right: -8px;
+    font-size: 130px; opacity: 0.10;
+    transform: rotate(-15deg);
+    filter: drop-shadow(0 6px 18px rgba(255, 60, 60, 0.35));
+  }
+  .hero::after {
+    content: "🍁";
+    position: absolute;
+    bottom: -28px; left: -16px;
+    font-size: 90px; opacity: 0.07;
+    transform: rotate(28deg);
+  }
+
+  .hero-top {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 22px;
+    position: relative; z-index: 2;
+  }
+  .hero-greeting {
+    font-size: var(--type-footnote);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+  }
+  .lang-toggle {
+    display: inline-flex; align-items: center;
+    background: rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    font-size: 13px; font-weight: 700;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .lang-toggle button {
+    border: 0; background: transparent;
+    padding: 5px 13px; border-radius: var(--radius-pill);
+    font: inherit; font-weight: 700;
+    color: rgba(255, 255, 255, 0.72);
+    cursor: pointer; transition: all 180ms ease;
+  }
+  .lang-toggle button.active {
+    background: #ffffff;
+    color: #1a1148;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  }
+
+  .hero-title {
+    font-family: var(--font-rounded);
+    font-size: var(--type-display);
+    font-weight: 900;
+    line-height: 1.02;
+    letter-spacing: -0.035em;
+    margin: 0;
+    color: #ffffff;
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.22);
+    position: relative; z-index: 2;
+  }
+  .hero-title .accent {
+    background: linear-gradient(90deg, #ff5577 0%, #ffaa44 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+  }
+  .hero-sub {
+    margin: 12px 0 0;
+    font-size: var(--type-subhead);
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 500;
+    line-height: 1.4;
+    position: relative; z-index: 2;
+  }
+
+  /* ----------------------------------------------------------- */
+  /* RANDOM MIX HERO CARD — full-width, dark, glowing CTA       */
+  /* ----------------------------------------------------------- */
+  .random-mix {
+    margin: -22px 18px 0;
+    padding: 22px 22px 22px;
+    background:
+      radial-gradient(circle at 90% 0%, rgba(255, 200, 60, 0.30) 0%, transparent 60%),
+      radial-gradient(circle at 0% 100%, rgba(255, 50, 100, 0.32) 0%, transparent 55%),
+      linear-gradient(135deg, #1a1148 0%, #d52b1e 130%);
+    border-radius: var(--radius-tile);
+    color: #ffffff;
+    box-shadow: var(--shadow-hero);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    border: 0; width: calc(100% - 36px);
+    text-align: left; font: inherit;
+    transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 240ms ease;
+    z-index: 3;
+  }
+  .random-mix:active { transform: scale(0.97); }
+  .random-mix::before {
+    content: "🎲";
+    position: absolute;
+    right: -10px; top: -16px;
+    font-size: 110px; opacity: 0.18;
+    transform: rotate(15deg);
+  }
+  .random-mix .badge-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 10px;
+    position: relative; z-index: 2;
+  }
+  .random-mix .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: var(--type-caption-2);
+    font-weight: 800;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: #ffe07a;
+    background: rgba(255, 224, 122, 0.16);
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    backdrop-filter: blur(8px);
+  }
+  .random-mix .badge .star { font-size: 9px; }
+  .random-mix .maple {
+    font-size: 14px;
+  }
+  .random-mix .rm-title {
+    font-family: var(--font-rounded);
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.05;
+    color: #ffffff;
+    position: relative; z-index: 2;
+  }
+  .random-mix .rm-meta {
+    margin: 6px 0 16px;
+    font-size: var(--type-subhead);
+    color: rgba(255, 255, 255, 0.78);
+    font-weight: 500;
+    position: relative; z-index: 2;
+  }
+  .random-mix .rm-cta {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1a1148;
+    padding: 10px 16px;
+    border-radius: var(--radius-pill);
+    font-size: var(--type-callout);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.20);
+    position: relative; z-index: 2;
+  }
+  .random-mix .rm-cta .arrow {
+    font-size: 18px;
+    transition: transform 200ms ease;
+  }
+  .random-mix:hover .rm-cta .arrow { transform: translateX(3px); }
+
+  /* ----------------------------------------------------------- */
+  /* SECTION HEADER                                              */
+  /* ----------------------------------------------------------- */
+  .section-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 28px 22px 14px;
+  }
+  .section-header h2 {
+    font-family: var(--font-rounded);
+    font-size: var(--type-title-1);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: var(--ios-label);
+    margin: 0;
+  }
+  .section-header .count {
+    font-size: var(--type-footnote);
+    font-weight: 600;
+    color: var(--ios-label-secondary);
+  }
+
+  /* ----------------------------------------------------------- */
+  /* CATEGORY GRID — 2 col, gradient tiles                       */
+  /* ----------------------------------------------------------- */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 18px 24px;
+  }
+  .cat-tile {
+    display: block;
+    position: relative;
+    aspect-ratio: 1 / 1.05;
+    border-radius: var(--radius-tile);
+    border: 0; padding: 16px 14px 14px;
+    background: #fff;
+    color: #ffffff;
+    text-align: left;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 220ms ease;
+    font: inherit;
+  }
+  .cat-tile:hover { box-shadow: var(--shadow-card-hover); }
+  .cat-tile:active { transform: scale(0.96); }
+
+  /* Gradient backgrounds — one per category */
+  .cat-tile.cat-sports     { background: linear-gradient(155deg, #ff7a85 0%, #d70015 100%); }
+  .cat-tile.cat-science    { background: linear-gradient(155deg, #5fdcf0 0%, #008299 100%); }
+  .cat-tile.cat-geography  { background: linear-gradient(155deg, #74e88a 0%, #248a3d 100%); }
+  .cat-tile.cat-nature     { background: linear-gradient(155deg, #5be6db 0%, #0c817b 100%); }
+  .cat-tile.cat-popculture { background: linear-gradient(155deg, #ff7aab 0%, #d30f45 100%); }
+  .cat-tile.cat-world      { background: linear-gradient(155deg, #5badff 0%, #0040dd 100%); }
+  .cat-tile.cat-history    { background: linear-gradient(155deg, #d3a070 0%, #7f6545 100%); }
+  .cat-tile.cat-food       { background: linear-gradient(155deg, #ffb35e 0%, #c93400 100%); }
+  .cat-tile.cat-arts       { background: linear-gradient(155deg, #d18cf0 0%, #8944ab 100%); }
+  .cat-tile.cat-indigenous { background: linear-gradient(155deg, #8c8bf0 0%, #3634a3 100%); }
+  .cat-tile.cat-music      { background: linear-gradient(155deg, #f78bc0 0%, #c01876 100%); }
+  .cat-tile.cat-cinema     { background: linear-gradient(155deg, #ffa86b 0%, #d70015 100%); }
+
+  /* Decorative emoji as oversized backdrop on each tile */
+  .cat-tile .glyph-bg {
+    position: absolute;
+    right: -14px; bottom: -22px;
+    font-size: 96px;
+    line-height: 1;
+    opacity: 0.18;
+    transform: rotate(-12deg);
+    pointer-events: none;
+    text-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  }
+  /* Subtle highlight gloss */
+  .cat-tile::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.20) 0%, rgba(255, 255, 255, 0) 35%);
+    pointer-events: none;
+  }
+
+  .cat-tile .glyph-fg {
+    width: 38px; height: 38px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.22);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    backdrop-filter: blur(6px);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.35);
+    margin-bottom: 28px;
+    position: relative; z-index: 2;
+  }
+  .cat-tile .name {
+    font-family: var(--font-rounded);
+    display: block;
+    font-size: 19px;
+    font-weight: 800;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    color: #ffffff;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.20);
+    position: relative; z-index: 2;
+    margin-bottom: 6px;
+  }
+  .cat-tile .qcount {
+    font-size: var(--type-caption-1);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.84);
+    position: relative; z-index: 2;
+    display: inline-block;
+    background: rgba(0, 0, 0, 0.18);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    backdrop-filter: blur(4px);
+  }
+
+  /* ----------------------------------------------------------- */
+  /* TAB BAR                                                     */
+  /* ----------------------------------------------------------- */
+  .tab-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 86px;
+    padding: 8px 0 24px;
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    backdrop-filter: saturate(180%) blur(24px);
+    box-shadow: var(--shadow-tabbar);
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 10;
+  }
+  .tab {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+    padding: 6px 4px;
+    background: transparent; border: 0;
+    color: var(--ios-label-tertiary);
+    font: inherit;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+    cursor: pointer; transition: color 150ms ease;
+    text-transform: uppercase;
+  }
+  .tab .icon-wrap {
+    width: 44px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 12px;
+    transition: background 200ms ease;
+  }
+  .tab.active {
+    color: #ffffff;
+  }
+  .tab.active .icon-wrap {
+    background: linear-gradient(135deg, var(--sys-pink) 0%, var(--sys-orange) 100%);
+    box-shadow: 0 6px 14px rgba(255, 45, 85, 0.35);
+  }
+  .tab.active .label {
+    color: var(--sys-pink-deep);
+  }
+
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 3px;
+    z-index: 11;
+  }
+
+  .caption {
+    color: #8e8e93;
+    font-size: 12px;
+    margin-top: 10px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 920px;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 1300px) {
+    .frames { gap: 28px; }
+    .frame { transform: scale(0.92); transform-origin: top center; }
+  }
+  @media (max-width: 900px) {
+    .frames { flex-direction: column; gap: 32px; }
+    .frame { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="review">
+  <div class="review-header">
+    <h1>Canadian Trivia Quest — Menu (v2)</h1>
+    <p>Bold gradient cards, dark hero, Apple Arcade energy. iPhone 14 (390×844). EN + FR side-by-side.</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- ===================== EN FRAME ===================== -->
+    <div>
+      <div class="frame">
+        <div class="frame-screen">
+          <div class="app">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="icons">
+                <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><path d="M1 4a1 1 0 011-1h1v5H2a1 1 0 01-1-1V4zM5 2.5a1 1 0 011-1h1V8H6a1 1 0 01-1-1V2.5zM9 1a1 1 0 011-1h1v8h-1a1 1 0 01-1-1V1zM13 .5h1.5A1.5 1.5 0 0116 2v5.5a1.5 1.5 0 01-1.5 1.5H13V.5z" fill="currentColor"/></svg>
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2c2 0 3.8.7 5.2 2L14 3.2A8.5 8.5 0 008 1a8.5 8.5 0 00-6 2.2L2.8 4A7 7 0 018 2z" fill="currentColor"/></svg>
+                <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+              </div>
+            </div>
+
+            <div class="scroll">
+              <header class="hero">
+                <div class="hero-top">
+                  <span class="hero-greeting">🍁 Bonjour, ready?</span>
+                  <div class="lang-toggle" role="tablist" aria-label="Language">
+                    <button class="active" role="tab" aria-selected="true">EN</button>
+                    <button role="tab" aria-selected="false">FR</button>
+                  </div>
+                </div>
+                <h1 class="hero-title">Trivia<br><span class="accent">Quest</span></h1>
+                <p class="hero-sub">12 categories · 600+ questions · all about Canada.</p>
+              </header>
+
+              <button class="random-mix">
+                <div class="badge-row">
+                  <span class="badge"><span class="star">★</span> Recommended</span>
+                  <span class="maple">🍁</span>
+                </div>
+                <p class="rm-title">Random Mix</p>
+                <p class="rm-meta">15 questions · easy → expert · all categories</p>
+                <span class="rm-cta">Start playing <span class="arrow">→</span></span>
+              </button>
+
+              <div class="section-header">
+                <h2>Categories</h2>
+                <span class="count">12 · 50 Qs each</span>
+              </div>
+
+              <div class="cat-grid">
+                <button class="cat-tile cat-sports">
+                  <div class="glyph-fg">🏒</div>
+                  <span class="name">Canadian<br>Sports</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🏒</span>
+                </button>
+                <button class="cat-tile cat-science">
+                  <div class="glyph-fg">🔬</div>
+                  <span class="name">Science &<br>Tech</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🔬</span>
+                </button>
+                <button class="cat-tile cat-geography">
+                  <div class="glyph-fg">🗺️</div>
+                  <span class="name">Geography</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🗺️</span>
+                </button>
+                <button class="cat-tile cat-nature">
+                  <div class="glyph-fg">🌲</div>
+                  <span class="name">Biology &<br>Nature</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🌲</span>
+                </button>
+                <button class="cat-tile cat-popculture">
+                  <div class="glyph-fg">🎬</div>
+                  <span class="name">Pop<br>Culture</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎬</span>
+                </button>
+                <button class="cat-tile cat-world">
+                  <div class="glyph-fg">🌍</div>
+                  <span class="name">World<br>Knowledge</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🌍</span>
+                </button>
+                <button class="cat-tile cat-history">
+                  <div class="glyph-fg">📜</div>
+                  <span class="name">Canadian<br>History</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">📜</span>
+                </button>
+                <button class="cat-tile cat-food">
+                  <div class="glyph-fg">🍁</div>
+                  <span class="name">Food &<br>Drink</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🍁</span>
+                </button>
+                <button class="cat-tile cat-arts">
+                  <div class="glyph-fg">🎨</div>
+                  <span class="name">Arts &<br>Literature</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎨</span>
+                </button>
+                <button class="cat-tile cat-indigenous">
+                  <div class="glyph-fg">🪶</div>
+                  <span class="name">Indigenous<br>Peoples</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🪶</span>
+                </button>
+                <button class="cat-tile cat-music">
+                  <div class="glyph-fg">🎵</div>
+                  <span class="name">Canadian<br>Music</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎵</span>
+                </button>
+                <button class="cat-tile cat-cinema">
+                  <div class="glyph-fg">🎥</div>
+                  <span class="name">Cinema<br>& TV</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎥</span>
+                </button>
+              </div>
+            </div>
+
+            <nav class="tab-bar">
+              <button class="tab active">
+                <div class="icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5z" fill="currentColor"/></svg>
+                </div>
+                <span class="label">Play</span>
+              </button>
+              <button class="tab">
+                <div class="icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 21V10M12 21V3M19 21v-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                </div>
+                <span class="label">Stats</span>
+              </button>
+              <button class="tab">
+                <div class="icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 13a1.6 1.6 0 010-2l1.5-1.2-1.7-3-1.8.7a1.6 1.6 0 01-1.7-1L15 4.5h-3l-.7 1.9a1.6 1.6 0 01-1.7 1l-1.8-.7-1.7 3 1.5 1.2a1.6 1.6 0 010 2L5.1 14.2l1.7 3 1.8-.7a1.6 1.6 0 011.7 1l.7 1.9h3l.7-1.9a1.6 1.6 0 011.7-1l1.8.7 1.7-3-1.5-1.2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                </div>
+                <span class="label">Settings</span>
+              </button>
+            </nav>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-label">EN · 2-col grid · Random Mix hero</div>
+    </div>
+
+    <!-- ===================== FR FRAME ===================== -->
+    <div>
+      <div class="frame">
+        <div class="frame-screen">
+          <div class="app">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="icons">
+                <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><path d="M1 4a1 1 0 011-1h1v5H2a1 1 0 01-1-1V4zM5 2.5a1 1 0 011-1h1V8H6a1 1 0 01-1-1V2.5zM9 1a1 1 0 011-1h1v8h-1a1 1 0 01-1-1V1zM13 .5h1.5A1.5 1.5 0 0116 2v5.5a1.5 1.5 0 01-1.5 1.5H13V.5z" fill="currentColor"/></svg>
+                <svg width="16" height="11" viewBox="0 0 16 11" fill="none"><path d="M8 2c2 0 3.8.7 5.2 2L14 3.2A8.5 8.5 0 008 1a8.5 8.5 0 00-6 2.2L2.8 4A7 7 0 018 2z" fill="currentColor"/></svg>
+                <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+              </div>
+            </div>
+
+            <div class="scroll">
+              <header class="hero">
+                <div class="hero-top">
+                  <span class="hero-greeting">🍁 Salut, prêt?</span>
+                  <div class="lang-toggle" role="tablist" aria-label="Langue">
+                    <button role="tab" aria-selected="false">EN</button>
+                    <button class="active" role="tab" aria-selected="true">FR</button>
+                  </div>
+                </div>
+                <h1 class="hero-title">Quête<br><span class="accent">trivia</span></h1>
+                <p class="hero-sub">12 catégories · 600+ questions · 100 % canadien.</p>
+              </header>
+
+              <button class="random-mix">
+                <div class="badge-row">
+                  <span class="badge"><span class="star">★</span> Recommandé</span>
+                  <span class="maple">🍁</span>
+                </div>
+                <p class="rm-title">Mélange aléatoire</p>
+                <p class="rm-meta">15 questions · facile → expert · toutes catégories</p>
+                <span class="rm-cta">Commencer <span class="arrow">→</span></span>
+              </button>
+
+              <div class="section-header">
+                <h2>Catégories</h2>
+                <span class="count">12 · 50 Qs chacune</span>
+              </div>
+
+              <div class="cat-grid">
+                <button class="cat-tile cat-sports">
+                  <div class="glyph-fg">🏒</div>
+                  <span class="name">Sports<br>canadiens</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🏒</span>
+                </button>
+                <button class="cat-tile cat-science">
+                  <div class="glyph-fg">🔬</div>
+                  <span class="name">Science et<br>technologie</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🔬</span>
+                </button>
+                <button class="cat-tile cat-geography">
+                  <div class="glyph-fg">🗺️</div>
+                  <span class="name">Géographie</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🗺️</span>
+                </button>
+                <button class="cat-tile cat-nature">
+                  <div class="glyph-fg">🌲</div>
+                  <span class="name">Biologie<br>et nature</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🌲</span>
+                </button>
+                <button class="cat-tile cat-popculture">
+                  <div class="glyph-fg">🎬</div>
+                  <span class="name">Culture<br>populaire</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎬</span>
+                </button>
+                <button class="cat-tile cat-world">
+                  <div class="glyph-fg">🌍</div>
+                  <span class="name">Connaissances<br>mondiales</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🌍</span>
+                </button>
+                <button class="cat-tile cat-history">
+                  <div class="glyph-fg">📜</div>
+                  <span class="name">Histoire<br>canadienne</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">📜</span>
+                </button>
+                <button class="cat-tile cat-food">
+                  <div class="glyph-fg">🍁</div>
+                  <span class="name">Bouffe<br>et boissons</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🍁</span>
+                </button>
+                <button class="cat-tile cat-arts">
+                  <div class="glyph-fg">🎨</div>
+                  <span class="name">Arts et<br>littérature</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎨</span>
+                </button>
+                <button class="cat-tile cat-indigenous">
+                  <div class="glyph-fg">🪶</div>
+                  <span class="name">Peuples<br>autochtones</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🪶</span>
+                </button>
+                <button class="cat-tile cat-music">
+                  <div class="glyph-fg">🎵</div>
+                  <span class="name">Musique<br>canadienne</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎵</span>
+                </button>
+                <button class="cat-tile cat-cinema">
+                  <div class="glyph-fg">🎥</div>
+                  <span class="name">Cinéma<br>et télé</span>
+                  <span class="qcount">50 Qs</span>
+                  <span class="glyph-bg">🎥</span>
+                </button>
+              </div>
+            </div>
+
+            <nav class="tab-bar">
+              <button class="tab active">
+                <div class="icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7L8 5z" fill="currentColor"/></svg>
+                </div>
+                <span class="label">Jouer</span>
+              </button>
+              <button class="tab">
+                <div class="icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 21V10M12 21V3M19 21v-7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                </div>
+                <span class="label">Stats</span>
+              </button>
+              <button class="tab">
+                <div class="icon-wrap">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/><path d="M19.4 13a1.6 1.6 0 010-2l1.5-1.2-1.7-3-1.8.7a1.6 1.6 0 01-1.7-1L15 4.5h-3l-.7 1.9a1.6 1.6 0 01-1.7 1l-1.8-.7-1.7 3 1.5 1.2a1.6 1.6 0 010 2L5.1 14.2l1.7 3 1.8-.7a1.6 1.6 0 011.7 1l.7 1.9h3l.7-1.9a1.6 1.6 0 011.7-1l1.8.7 1.7-3-1.5-1.2z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                </div>
+                <span class="label">Réglages</span>
+              </button>
+            </nav>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-label">FR · longer strings hold without truncation</div>
+    </div>
+
+  </div>
+
+  <p class="caption">
+    Spec — Hero deep-purple gradient (#1a1148 → #4a1d8c) with red/pink radial glows + faint maple leaves.
+    Random Mix tile lifts -22px into the hero, dark-glass with glowing white CTA pill. Category tiles
+    use one iOS system color gradient each (12 distinct identities). Active tab uses pink→orange
+    gradient pill highlight. Press: scale 0.96 with spring physics (cubic-bezier 0.34, 1.56, 0.64, 1).
+    Type: SF Pro Rounded for hero/title (falls back to Nunito on non-Apple).
+  </p>
+</div>
+
+</body>
+</html>

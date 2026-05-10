@@ -55,11 +55,19 @@ interface RandomMixSplit {
   expert: number
 }
 
-export function getRandomMixSplit(length: GameLength): RandomMixSplit {
+export function getRandomMixSplit(length: number): RandomMixSplit {
   switch (length) {
     case 5:  return { easy: 1, medium: 2, hard: 1, expert: 1 }
     case 10: return { easy: 2, medium: 3, hard: 3, expert: 2 }
+    case 15: return { easy: 3, medium: 5, hard: 4, expert: 3 }
     case 20: return { easy: 4, medium: 7, hard: 5, expert: 4 }
+    default: {
+      const easy = Math.max(1, Math.round(length * 0.2))
+      const medium = Math.max(1, Math.round(length * 0.35))
+      const hard = Math.max(1, Math.round(length * 0.27))
+      const expert = Math.max(1, length - easy - medium - hard)
+      return { easy, medium, hard, expert }
+    }
   }
 }
 

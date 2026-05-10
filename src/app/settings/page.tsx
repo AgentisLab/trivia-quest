@@ -11,7 +11,6 @@ import {
   PREF_KEYS,
 } from "@/lib/preferences"
 import { clearStats } from "@/lib/stats"
-import { IOSScaffold, IOSSection, IOSRow } from "@/components/IOSScaffold"
 import IOSSwitch from "@/components/IOSSwitch"
 import LangToggle from "@/components/LangToggle"
 import TabBar from "@/components/TabBar"
@@ -30,7 +29,10 @@ export default function SettingsPage() {
   }, [])
 
   const t = (key: string) => ui[key]?.[lang] || key
-  const handleLang = (next: Lang) => { setLang(next); saveLang(next) }
+  const handleLang = (next: Lang) => {
+    setLang(next)
+    saveLang(next)
+  }
 
   const handleSound = (next: boolean) => {
     setSound(next)
@@ -41,7 +43,11 @@ export default function SettingsPage() {
     setHaptics(next)
     saveBoolPref(PREF_KEYS.haptics, next)
     if (next && typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-      try { navigator.vibrate(20) } catch { /* no-op */ }
+      try {
+        navigator.vibrate(20)
+      } catch {
+        /* no-op */
+      }
     }
   }
 
@@ -53,45 +59,127 @@ export default function SettingsPage() {
   }
 
   if (!hydrated) {
-    return <div className="min-h-screen" style={{ background: "var(--ios-bg)" }} />
+    return <div className="min-h-screen" style={{ background: "var(--bg-1)" }} />
   }
 
   return (
     <>
-      <IOSScaffold title={t("settingsTitle")} lang={lang} onLangChange={handleLang} showLangToggle={false}>
-        <IOSSection header={t("settingsLanguage")}>
-          <IOSRow withSeparator={false}>
-            <div className="flex items-center justify-between w-full">
-              <span style={{ fontSize: "var(--type-body)" }}>{t("settingsLanguage")}</span>
-              <LangToggle lang={lang} onChange={handleLang} />
-            </div>
-          </IOSRow>
-        </IOSSection>
+      <div
+        className="min-h-screen"
+        style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
+      >
+        <header
+          className="px-[22px]"
+          style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+        >
+          <h1
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 28,
+              fontWeight: 700,
+              letterSpacing: "-0.025em",
+              color: "var(--ink-100)",
+            }}
+          >
+            {t("settingsTitle")}
+          </h1>
+        </header>
 
-        <IOSSection header={t("settingsGameplay")}>
-          <IOSRow withSeparator={false}>
-            <div className="flex items-center justify-between w-full">
-              <span style={{ fontSize: "var(--type-body)" }}>{t("settingsSound")}</span>
+        <div className="px-[22px] pb-[120px] pt-6">
+          <SectionHeader>{t("settingsLanguage")}</SectionHeader>
+          <Card>
+            <Row>
+              <span style={{ fontSize: 15, color: "var(--ink-100)" }}>{t("settingsLanguage")}</span>
+              <LangToggle lang={lang} onChange={handleLang} size="sm" />
+            </Row>
+          </Card>
+
+          <SectionHeader>{t("settingsGameplay")}</SectionHeader>
+          <Card>
+            <Row>
+              <span style={{ fontSize: 15, color: "var(--ink-100)" }}>{t("settingsSound")}</span>
               <IOSSwitch checked={sound} onChange={handleSound} ariaLabel={t("settingsSound")} />
-            </div>
-          </IOSRow>
-          <IOSRow>
-            <div className="flex items-center justify-between w-full">
-              <span style={{ fontSize: "var(--type-body)" }}>{t("settingsHaptics")}</span>
-              <IOSSwitch checked={haptics} onChange={handleHaptics} ariaLabel={t("settingsHaptics")} />
-            </div>
-          </IOSRow>
-        </IOSSection>
+            </Row>
+            <Row last>
+              <span style={{ fontSize: 15, color: "var(--ink-100)" }}>{t("settingsHaptics")}</span>
+              <IOSSwitch
+                checked={haptics}
+                onChange={handleHaptics}
+                ariaLabel={t("settingsHaptics")}
+              />
+            </Row>
+          </Card>
 
-        <IOSSection header={t("settingsData")}>
-          <IOSRow withSeparator={false} onClick={handleResetStats} destructive>
-            <span style={{ fontSize: "var(--type-body)", fontWeight: 500 }}>
+          <SectionHeader>{t("settingsData")}</SectionHeader>
+          <Card>
+            <button
+              type="button"
+              onClick={handleResetStats}
+              className="press w-full text-left"
+              style={{
+                padding: "14px 16px",
+                background: "transparent",
+                border: 0,
+                color: "var(--danger)",
+                fontSize: 15,
+                fontWeight: 500,
+                letterSpacing: "-0.005em",
+              }}
+            >
               {t("settingsResetStats")}
-            </span>
-          </IOSRow>
-        </IOSSection>
-      </IOSScaffold>
+            </button>
+          </Card>
+        </div>
+      </div>
       <TabBar />
     </>
+  )
+}
+
+function SectionHeader({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="mx-1 mb-2 mt-6"
+      style={{
+        fontSize: 12,
+        fontWeight: 600,
+        color: "var(--ink-60)",
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--separator)",
+        borderRadius: 16,
+        overflow: "hidden",
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Row({ children, last = false }: { children: React.ReactNode; last?: boolean }) {
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: "12px 16px",
+        minHeight: 50,
+        borderBottom: last ? "none" : "1px solid var(--separator)",
+      }}
+    >
+      {children}
+    </div>
   )
 }

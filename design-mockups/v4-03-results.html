@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Trivia Quest · v4 Results</title>
+<style>
+  :root{
+    --bg-0:#000000;
+    --bg-1:#0a0a0a;
+    --bg-2:#161616;
+    --bg-3:#1f1f1f;
+    --separator:rgba(255,255,255,0.08);
+
+    --ink-100:#ffffff;
+    --ink-80:rgba(255,255,255,0.78);
+    --ink-60:rgba(255,255,255,0.55);
+    --ink-40:rgba(255,255,255,0.38);
+
+    --accent:#ef3340;
+    --success:rgba(48,209,88,0.92);
+    --danger:rgba(255,69,58,0.92);
+
+    --font-display:ui-rounded,'SF Pro Rounded',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;
+    --font-text:'SF Pro Text','SF Pro Display',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;padding:0;
+    background:#050505;color:var(--ink-100);
+    font-family:var(--font-text);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+
+  .stage{
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:48px 24px 96px;
+    background:#050505;
+  }
+  .stage-title{font-family:var(--font-display);font-weight:700;letter-spacing:-0.02em;color:#fff;font-size:22px;margin:0 0 4px}
+  .stage-sub{color:var(--ink-60);font-size:13px;margin:0 0 28px;font-weight:500}
+
+  .row{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center;gap:14px}
+  .col-tag{font-size:11px;font-weight:600;color:var(--ink-60);letter-spacing:.18em;text-transform:uppercase}
+
+  .phone{
+    width:390px;height:844px;border-radius:54px;background:#000;padding:11px;
+    box-shadow:0 0 0 2px #1e1e22,0 0 0 3px #2a2a30,
+      0 60px 120px -30px rgba(0,0,0,0.85);
+    position:relative;overflow:hidden;
+  }
+  .screen{
+    width:100%;height:100%;border-radius:44px;overflow:hidden;position:relative;
+    background:var(--bg-0);
+    color:#fff;display:flex;flex-direction:column;
+  }
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:30}
+
+  .status{
+    position:relative;z-index:5;height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 26px 6px;color:#fff;font-size:15px;font-weight:600;letter-spacing:-0.01em;font-family:var(--font-display);
+  }
+  .status .right{display:flex;align-items:center;gap:6px}
+
+  /* Top bar — quiet */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 0;
+  }
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--bg-2);
+    border:1px solid var(--separator);
+    display:flex;align-items:center;justify-content:center;color:#fff;
+  }
+  .icon-btn svg{width:14px;height:14px}
+  .topbar .title{
+    font-family:var(--font-display);
+    font-size:16px;font-weight:600;letter-spacing:-0.01em;color:var(--ink-100);
+  }
+
+  /* Content */
+  .content{
+    flex:1;display:flex;flex-direction:column;
+    padding:36px 26px 0;
+  }
+
+  /* Header — quiet */
+  .header{
+    display:flex;flex-direction:column;gap:8px;
+    margin-bottom:28px;
+  }
+  .header .kicker{
+    font-size:12px;font-weight:500;letter-spacing:-0.005em;color:var(--ink-60);margin:0;
+  }
+  .header .h1{
+    font-family:var(--font-display);
+    font-size:28px;font-weight:700;letter-spacing:-0.025em;line-height:1.1;color:var(--ink-100);margin:0;
+  }
+
+  /* Hero score block */
+  .hero{
+    display:flex;align-items:flex-end;gap:14px;
+    padding:8px 0 6px;
+    border-bottom:1px solid var(--separator);
+    padding-bottom:24px;
+    margin-bottom:24px;
+  }
+  .hero .num{
+    font-family:var(--font-display);
+    font-size:80px;font-weight:700;letter-spacing:-0.04em;line-height:0.95;color:var(--ink-100);
+    font-variant-numeric:tabular-nums;
+  }
+  .hero .of{
+    font-family:var(--font-display);
+    font-size:24px;font-weight:600;letter-spacing:-0.02em;color:var(--ink-60);
+    margin-bottom:8px;
+  }
+  .hero .meta{
+    margin-left:auto;text-align:right;
+    display:flex;flex-direction:column;gap:2px;
+    margin-bottom:6px;
+  }
+  .hero .meta .pct{
+    font-family:var(--font-display);
+    font-size:22px;font-weight:600;letter-spacing:-0.02em;color:var(--success);
+    font-variant-numeric:tabular-nums;line-height:1;
+  }
+  .hero .meta .pct.down{color:var(--danger)}
+  .hero .meta .delta{
+    font-size:11px;font-weight:500;color:var(--ink-60);letter-spacing:-0.005em;margin-top:2px;
+  }
+
+  /* Stat list — Apple Stocks style rows */
+  .stat-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 0;
+    border-bottom:1px solid var(--separator);
+  }
+  .stat-row:last-child{border-bottom:none}
+  .stat-row .label{font-size:14px;font-weight:500;color:var(--ink-80);letter-spacing:-0.005em}
+  .stat-row .value{
+    font-family:var(--font-display);
+    font-size:16px;font-weight:600;color:var(--ink-100);letter-spacing:-0.012em;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat-row .value.success{color:var(--success)}
+
+  /* Difficulty breakdown — quiet bars */
+  .breakdown{
+    margin-top:8px;
+  }
+  .breakdown .h{
+    font-size:12px;font-weight:600;color:var(--ink-60);letter-spacing:0.04em;text-transform:uppercase;
+    margin:0 0 12px;
+  }
+  .bar-row{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 0;
+  }
+  .bar-row .lbl{
+    font-size:13px;font-weight:500;color:var(--ink-80);letter-spacing:-0.005em;
+    width:64px;
+  }
+  .bar-row .bar{
+    flex:1;height:4px;border-radius:2px;background:rgba(255,255,255,0.08);overflow:hidden;
+  }
+  .bar-row .fill{
+    height:100%;background:var(--ink-100);border-radius:2px;
+  }
+  .bar-row .val{
+    font-family:var(--font-display);
+    font-size:13px;font-weight:600;color:var(--ink-80);letter-spacing:-0.005em;
+    font-variant-numeric:tabular-nums;
+    width:40px;text-align:right;
+  }
+
+  /* CTA dock */
+  .cta-dock{
+    position:absolute;left:18px;right:18px;bottom:36px;display:flex;flex-direction:column;gap:8px;z-index:7;
+  }
+  .cta-primary{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    height:52px;border-radius:14px;
+    background:var(--accent);
+    color:#fff;font-family:var(--font-display);
+    font-size:16px;font-weight:600;letter-spacing:-0.01em;
+  }
+  .cta-row{display:flex;gap:8px}
+  .cta-secondary{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+    height:46px;border-radius:12px;
+    background:var(--bg-2);
+    border:1px solid var(--separator);
+    color:var(--ink-100);font-size:14px;font-weight:500;letter-spacing:-0.005em;
+  }
+  .cta-secondary svg{width:14px;height:14px}
+
+  .home{position:absolute;left:50%;transform:translateX(-50%);bottom:6px;width:140px;height:5px;border-radius:3px;background:rgba(255,255,255,0.7);z-index:9}
+
+  /* Footer legend */
+  .legend{
+    margin-top:34px;max-width:920px;width:100%;
+    background:var(--bg-2);
+    border:1px solid var(--separator);
+    border-radius:18px;padding:18px 22px;color:var(--ink-80);
+    font-size:13px;line-height:1.55;
+  }
+  .legend h3{margin:0 0 8px;color:#fff;font-size:13px;font-weight:600;letter-spacing:-0.005em}
+  .legend ul{margin:0;padding-left:18px}
+  .legend li{margin:4px 0}
+  .legend code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:#fff;background:var(--bg-3);padding:1px 6px;border-radius:6px}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <h1 class="stage-title">Trivia Quest — v4 · Results</h1>
+    <p class="stage-sub">Single screen · Apple Fitness end-of-workout summary lineage · Score, accuracy, breakdown — that's it</p>
+
+    <div class="row">
+
+      <!-- ============== EN ============== -->
+      <div class="col">
+        <div class="col-tag">English · Final summary</div>
+        <div class="phone">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span style="color:#fff">9:41</span>
+              <span class="right">
+                <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="#fff"/><rect x="5" y="1" width="3" height="10" rx="1" fill="#fff"/><rect x="10" y="0" width="3" height="11" rx="1" fill="#fff"/><rect x="15" y="2" width="3" height="9" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+                <svg width="26" height="11" viewBox="0 0 26 11"><rect x="0.5" y="0.5" width="22" height="10" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="19" height="7" rx="1.5" fill="#fff"/><rect x="23" y="3" width="2" height="5" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+              </span>
+            </div>
+
+            <div class="topbar">
+              <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6l-12 12"/></svg></div>
+              <div class="title">Summary</div>
+              <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12v7h16v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg></div>
+            </div>
+
+            <div class="content">
+              <div class="header">
+                <p class="kicker">Canadian Sports · Hard</p>
+                <h1 class="h1">May 10 · 9:41 PM</h1>
+              </div>
+
+              <div class="hero">
+                <span class="num">9</span>
+                <span class="of">/ 10</span>
+                <div class="meta">
+                  <p class="pct">90%</p>
+                  <p class="delta">accuracy</p>
+                </div>
+              </div>
+
+              <div class="stat-row">
+                <span class="label">Best streak</span>
+                <span class="value">7 in a row</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Total time</span>
+                <span class="value">1 min 48 s</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Average per question</span>
+                <span class="value">10.8 s</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Day streak</span>
+                <span class="value">12 days</span>
+              </div>
+
+              <div class="breakdown">
+                <p class="h">By difficulty</p>
+                <div class="bar-row">
+                  <span class="lbl">Easy</span>
+                  <span class="bar"><span class="fill" style="width:100%"></span></span>
+                  <span class="val">3 / 3</span>
+                </div>
+                <div class="bar-row">
+                  <span class="lbl">Medium</span>
+                  <span class="bar"><span class="fill" style="width:80%"></span></span>
+                  <span class="val">4 / 5</span>
+                </div>
+                <div class="bar-row">
+                  <span class="lbl">Hard</span>
+                  <span class="bar"><span class="fill" style="width:100%"></span></span>
+                  <span class="val">2 / 2</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta-dock">
+              <div class="cta-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7-11-7Z"/></svg>
+                Play again
+              </div>
+              <div class="cta-row">
+                <div class="cta-secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12v7h16v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg>
+                  Share
+                </div>
+                <div class="cta-secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18M12 3v18"/></svg>
+                  New category
+                </div>
+              </div>
+            </div>
+
+            <div class="home"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============== FR ============== -->
+      <div class="col">
+        <div class="col-tag">Français · Récapitulatif</div>
+        <div class="phone">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span style="color:#fff">9:41</span>
+              <span class="right">
+                <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="#fff"/><rect x="5" y="1" width="3" height="10" rx="1" fill="#fff"/><rect x="10" y="0" width="3" height="11" rx="1" fill="#fff"/><rect x="15" y="2" width="3" height="9" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+                <svg width="26" height="11" viewBox="0 0 26 11"><rect x="0.5" y="0.5" width="22" height="10" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="19" height="7" rx="1.5" fill="#fff"/><rect x="23" y="3" width="2" height="5" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+              </span>
+            </div>
+
+            <div class="topbar">
+              <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6l-12 12"/></svg></div>
+              <div class="title">Récap</div>
+              <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12v7h16v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg></div>
+            </div>
+
+            <div class="content">
+              <div class="header">
+                <p class="kicker">Sports canadiens · Difficile</p>
+                <h1 class="h1">10 mai · 21 h 41</h1>
+              </div>
+
+              <div class="hero">
+                <span class="num">9</span>
+                <span class="of">/ 10</span>
+                <div class="meta">
+                  <p class="pct">90 %</p>
+                  <p class="delta">précision</p>
+                </div>
+              </div>
+
+              <div class="stat-row">
+                <span class="label">Meilleure série</span>
+                <span class="value">7 d'affilée</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Temps total</span>
+                <span class="value">1 min 48 s</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Moyenne par question</span>
+                <span class="value">10,8 s</span>
+              </div>
+              <div class="stat-row">
+                <span class="label">Série quotidienne</span>
+                <span class="value">12 jours</span>
+              </div>
+
+              <div class="breakdown">
+                <p class="h">Par difficulté</p>
+                <div class="bar-row">
+                  <span class="lbl">Facile</span>
+                  <span class="bar"><span class="fill" style="width:100%"></span></span>
+                  <span class="val">3 / 3</span>
+                </div>
+                <div class="bar-row">
+                  <span class="lbl">Moyenne</span>
+                  <span class="bar"><span class="fill" style="width:80%"></span></span>
+                  <span class="val">4 / 5</span>
+                </div>
+                <div class="bar-row">
+                  <span class="lbl">Difficile</span>
+                  <span class="bar"><span class="fill" style="width:100%"></span></span>
+                  <span class="val">2 / 2</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="cta-dock">
+              <div class="cta-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7-11-7Z"/></svg>
+                Rejouer
+              </div>
+              <div class="cta-row">
+                <div class="cta-secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12v7h16v-7"/><path d="M12 3v12M7 8l5-5 5 5"/></svg>
+                  Partager
+                </div>
+                <div class="cta-secondary">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h18M12 3v18"/></svg>
+                  Nouvelle catégorie
+                </div>
+              </div>
+            </div>
+
+            <div class="home"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <h3>v4 — What this results screen is, and what it isn't</h3>
+      <ul>
+        <li><strong>One screen, no story.</strong> The 5-step Spotify-Wrapped flow is gone. No tap-to-advance, no story progress bars, no auto-advance. Single page, scannable in two seconds, like Apple Fitness's end-of-workout summary or Apple Stocks's day-end card.</li>
+        <li><strong>Score is restrained, not mega.</strong> 80px (capped) instead of 160px. Solid white. No gradient fill, no orange-to-pink. The "/10" sits beside it in <code>--ink-60</code>.</li>
+        <li><strong>Stat list, not glass tally.</strong> Apple-Stocks-style hairline-separated rows: Best streak · Total time · Avg per question · Day streak. <code>tabular-nums</code> on every value.</li>
+        <li><strong>Breakdown bars, monochrome.</strong> Single white fill on a hairline track. No green-to-blue or amber-to-red gradients. The bar speaks; the color doesn't.</li>
+        <li><strong>Effects stripped:</strong> no shimmer animation, no floating confetti loop, no pulsing tap ring, no glow on the score, no kinetic typography reveal. Static, restrained, premium.</li>
+        <li><strong>One accent moment:</strong> the "Play again" CTA is the single use of <code>--accent</code> (#ef3340). Everything else is grayscale + a quiet green for the accuracy percentage (functional only — performance signal).</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

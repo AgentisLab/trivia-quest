@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Trivia Quest · v4 Question</title>
+<style>
+  :root{
+    --bg-0:#000000;
+    --bg-1:#0a0a0a;
+    --bg-2:#161616;
+    --bg-3:#1f1f1f;
+    --separator:rgba(255,255,255,0.08);
+
+    --ink-100:#ffffff;
+    --ink-80:rgba(255,255,255,0.78);
+    --ink-60:rgba(255,255,255,0.55);
+    --ink-40:rgba(255,255,255,0.38);
+
+    --accent:#ef3340;
+    --success:rgba(48,209,88,0.92);
+    --danger:rgba(255,69,58,0.92);
+
+    --font-display:ui-rounded,'SF Pro Rounded',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;
+    --font-text:'SF Pro Text','SF Pro Display',-apple-system,system-ui,'Segoe UI',Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;padding:0;
+    background:#050505;color:var(--ink-100);
+    font-family:var(--font-text);
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+
+  .stage{
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;
+    padding:48px 24px 96px;
+    background:#050505;
+  }
+  .stage-title{font-family:var(--font-display);font-weight:700;letter-spacing:-0.02em;color:var(--ink-100);font-size:22px;margin:0 0 4px}
+  .stage-sub{color:var(--ink-60);font-size:13px;margin:0 0 28px;font-weight:500}
+
+  .pair{display:flex;gap:36px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .pair-col{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .pair-tag{font-size:11px;font-weight:600;color:var(--ink-60);letter-spacing:.18em;text-transform:uppercase}
+
+  .phone{
+    width:390px;height:844px;border-radius:54px;background:#000;padding:11px;
+    box-shadow:0 0 0 2px #1e1e22,0 0 0 3px #2a2a30,
+      0 60px 120px -30px rgba(0,0,0,0.85);
+    position:relative;overflow:hidden;
+  }
+  .screen{
+    width:100%;height:100%;border-radius:44px;overflow:hidden;position:relative;
+    background:var(--bg-0);
+    color:var(--ink-100);display:flex;flex-direction:column;
+  }
+  .notch{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:120px;height:34px;border-radius:20px;background:#000;z-index:30}
+
+  .status{
+    position:relative;z-index:5;height:54px;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 26px 6px;color:#fff;font-size:15px;font-weight:600;letter-spacing:-0.01em;font-family:var(--font-display);
+  }
+  .status .right{display:flex;align-items:center;gap:6px}
+
+  /* Live activity — quiet, monochrome, no flame */
+  .live{
+    margin:6px auto 0;
+    display:flex;align-items:center;gap:10px;
+    padding:7px 14px;border-radius:999px;
+    background:rgba(20,20,20,0.85);
+    backdrop-filter:blur(20px) saturate(140%);
+    -webkit-backdrop-filter:blur(20px) saturate(140%);
+    font-size:12px;font-weight:600;letter-spacing:-0.005em;
+    z-index:6;width:fit-content;
+  }
+  .live .stat{display:flex;align-items:center;gap:5px;color:var(--ink-80)}
+  .live .stat .v{color:var(--ink-100);font-weight:700;font-variant-numeric:tabular-nums}
+  .live .sep{width:1px;height:11px;background:rgba(255,255,255,0.18)}
+
+  /* Top bar */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px 0;
+  }
+  .icon-btn{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--bg-2);
+    border:1px solid var(--separator);
+    display:flex;align-items:center;justify-content:center;color:var(--ink-100);
+  }
+  .icon-btn svg{width:14px;height:14px}
+  .seg{
+    display:flex;background:var(--bg-2);
+    border:1px solid var(--separator);
+    border-radius:999px;padding:3px;font-size:12px;font-weight:600;letter-spacing:-0.005em;
+  }
+  .seg span{padding:5px 12px;border-radius:999px;color:var(--ink-60)}
+  .seg span.on{background:var(--ink-100);color:#000}
+
+  /* Card stack area */
+  .stack{
+    flex:1;position:relative;
+    padding:18px 16px 40px;
+    overflow:hidden;
+  }
+  .peek{
+    position:absolute;left:30px;right:30px;
+    border-radius:22px;
+    background:var(--bg-1);
+    border:1px solid var(--separator);
+    z-index:1;
+  }
+  .peek.p1{top:580px;height:32px;transform:rotate(-1deg)}
+  .peek.p2{top:610px;height:22px;left:50px;right:50px;transform:rotate(1deg);opacity:.6}
+
+  /* Active question card */
+  .card{
+    position:relative;z-index:3;
+    border-radius:24px;overflow:hidden;
+    background:var(--bg-2);
+    border:1px solid var(--separator);
+    transform:rotate(-1deg);
+  }
+
+  /* Horizontal pulse timer — monochrome */
+  .timer-rail{
+    position:relative;height:4px;background:rgba(255,255,255,0.08);
+    overflow:hidden;
+  }
+  .timer-fill{
+    height:100%;width:62%;
+    background:var(--ink-100);
+  }
+
+  /* Card meta row */
+  .meta{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px 4px;
+  }
+  .badge{
+    font-size:11px;font-weight:600;letter-spacing:0.04em;color:var(--ink-80);
+    text-transform:uppercase;
+  }
+  .difficulty{
+    display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;
+    letter-spacing:0.04em;text-transform:uppercase;color:var(--ink-60);
+  }
+  .difficulty .pip{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,0.18)}
+  .difficulty .pip.on{background:var(--ink-100)}
+
+  .timer-num{
+    font-size:13px;font-weight:600;color:var(--ink-80);font-variant-numeric:tabular-nums;
+    letter-spacing:-0.005em;
+  }
+  .timer-num b{color:var(--ink-100);font-weight:700}
+
+  .question{
+    padding:14px 22px 22px;
+    font-family:var(--font-display);
+    font-size:26px;font-weight:600;letter-spacing:-0.02em;line-height:1.18;color:var(--ink-100);
+  }
+
+  .options{
+    padding:0 18px 20px;display:flex;flex-direction:column;gap:9px;
+  }
+  .option{
+    position:relative;
+    display:flex;align-items:center;gap:14px;
+    padding:15px 18px;border-radius:14px;
+    background:var(--bg-3);
+    border:1px solid var(--separator);
+    color:var(--ink-100);font-size:16px;font-weight:500;letter-spacing:-0.01em;
+  }
+  .option .key{
+    width:26px;height:26px;border-radius:7px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:600;color:var(--ink-80);letter-spacing:0;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--separator);
+    font-variant-numeric:tabular-nums;
+  }
+  .option .label{flex:1}
+
+  /* Hover/press: monochrome */
+  .option.is-hover{
+    background:#252527;
+    border-color:rgba(255,255,255,0.18);
+  }
+
+  /* Correct: subtle green border + checkmark, no glow */
+  .option.is-correct{
+    background:rgba(48,209,88,0.10);
+    border:1px solid var(--success);
+  }
+  .option.is-correct .key{
+    background:var(--success);color:#003a14;border-color:transparent;
+  }
+  /* Wrong: subtle red border */
+  .option.is-incorrect{
+    background:rgba(255,69,58,0.08);
+    border:1px solid rgba(255,69,58,0.55);
+  }
+
+  /* Bottom safe area */
+  .home{position:absolute;left:50%;transform:translateX(-50%);bottom:6px;width:140px;height:5px;border-radius:3px;background:rgba(255,255,255,0.7);z-index:9}
+
+  /* Skip / hint at bottom — quiet text only */
+  .hint{
+    position:absolute;left:0;right:0;bottom:42px;
+    text-align:center;color:var(--ink-40);font-size:12px;font-weight:500;letter-spacing:-0.005em;
+    z-index:5;
+  }
+
+  /* Annotations */
+  .legend{
+    margin-top:34px;max-width:1200px;width:100%;
+    background:var(--bg-2);
+    border:1px solid var(--separator);
+    border-radius:18px;padding:18px 22px;color:var(--ink-80);
+    font-size:13px;line-height:1.55;
+  }
+  .legend h3{margin:0 0 8px;color:var(--ink-100);font-size:13px;font-weight:600;letter-spacing:-0.005em}
+  .legend ul{margin:0;padding-left:18px}
+  .legend li{margin:4px 0}
+  .legend code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-100);background:var(--bg-3);padding:1px 6px;border-radius:6px}
+
+  .state-label{font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-60);margin-top:4px}
+</style>
+</head>
+<body>
+  <div class="stage">
+    <h1 class="stage-title">Trivia Quest — v4 · Question</h1>
+    <p class="stage-sub">Card stack kept · Pulse timer monochrome · No category tint, no confetti, no XP burst</p>
+
+    <div class="pair">
+
+      <!-- ============== EN — Active state ============== -->
+      <div class="pair-col">
+        <div class="pair-tag">English · Active</div>
+        <div class="phone">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>9:41</span>
+              <span class="right">
+                <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="#fff"/><rect x="5" y="1" width="3" height="10" rx="1" fill="#fff"/><rect x="10" y="0" width="3" height="11" rx="1" fill="#fff"/><rect x="15" y="2" width="3" height="9" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+                <svg width="26" height="11" viewBox="0 0 26 11"><rect x="0.5" y="0.5" width="22" height="10" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="19" height="7" rx="1.5" fill="#fff"/><rect x="23" y="3" width="2" height="5" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+              </span>
+            </div>
+
+            <!-- Live activity: category name + question position + streak (text only) -->
+            <div class="live">
+              <span class="stat">Sports</span>
+              <span class="sep"></span>
+              <span class="stat"><span class="v">7</span> / 10</span>
+              <span class="sep"></span>
+              <span class="stat">Streak <span class="v">6</span></span>
+            </div>
+
+            <div class="topbar">
+              <div class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+              </div>
+              <div class="seg"><span class="on">EN</span><span>FR</span></div>
+              <div class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.5 12a4.5 4.5 0 0 0-2.5-4"/></svg>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="peek p1"></div>
+              <div class="peek p2"></div>
+
+              <div class="card">
+                <div class="timer-rail"><div class="timer-fill"></div></div>
+
+                <div class="meta">
+                  <span class="badge">Canadian Sports</span>
+                  <div class="difficulty">
+                    <span class="pip on"></span><span class="pip on"></span><span class="pip on"></span>
+                    <span style="margin-left:4px">Hard</span>
+                  </div>
+                  <div class="timer-num"><b>12</b>s</div>
+                </div>
+
+                <div class="question">
+                  Which Canadian city hosted the first NHL outdoor Heritage Classic in 2003?
+                </div>
+
+                <div class="options">
+                  <div class="option">
+                    <span class="key">A</span>
+                    <span class="label">Toronto</span>
+                  </div>
+                  <div class="option is-hover">
+                    <span class="key">B</span>
+                    <span class="label">Edmonton</span>
+                  </div>
+                  <div class="option">
+                    <span class="key">C</span>
+                    <span class="label">Montreal</span>
+                  </div>
+                  <div class="option">
+                    <span class="key">D</span>
+                    <span class="label">Vancouver</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hint">Tap an answer</div>
+            </div>
+
+            <div class="home"></div>
+          </div>
+        </div>
+        <div class="state-label">Default · Selecting B</div>
+      </div>
+
+      <!-- ============== EN — Correct state ============== -->
+      <div class="pair-col">
+        <div class="pair-tag">English · Correct</div>
+        <div class="phone">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>9:41</span>
+              <span class="right">
+                <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="#fff"/><rect x="5" y="1" width="3" height="10" rx="1" fill="#fff"/><rect x="10" y="0" width="3" height="11" rx="1" fill="#fff"/><rect x="15" y="2" width="3" height="9" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+                <svg width="26" height="11" viewBox="0 0 26 11"><rect x="0.5" y="0.5" width="22" height="10" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="19" height="7" rx="1.5" fill="#fff"/><rect x="23" y="3" width="2" height="5" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+              </span>
+            </div>
+
+            <div class="live">
+              <span class="stat">Sports</span>
+              <span class="sep"></span>
+              <span class="stat"><span class="v">7</span> / 10</span>
+              <span class="sep"></span>
+              <span class="stat">Streak <span class="v">7</span></span>
+            </div>
+
+            <div class="topbar">
+              <div class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6l-12 12"/></svg>
+              </div>
+              <div class="seg"><span class="on">EN</span><span>FR</span></div>
+              <div class="icon-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.5 12a4.5 4.5 0 0 0-2.5-4"/></svg>
+              </div>
+            </div>
+
+            <div class="stack">
+              <div class="peek p1"></div>
+              <div class="peek p2"></div>
+
+              <div class="card">
+                <div class="timer-rail"><div class="timer-fill" style="width:62%"></div></div>
+
+                <div class="meta">
+                  <span class="badge">Canadian Sports</span>
+                  <div class="difficulty">
+                    <span class="pip on"></span><span class="pip on"></span><span class="pip on"></span>
+                    <span style="margin-left:4px">Hard</span>
+                  </div>
+                  <div class="timer-num"><b>12</b>s</div>
+                </div>
+
+                <div class="question">
+                  Which Canadian city hosted the first NHL outdoor Heritage Classic in 2003?
+                </div>
+
+                <div class="options">
+                  <div class="option" style="opacity:.4">
+                    <span class="key">A</span>
+                    <span class="label">Toronto</span>
+                  </div>
+                  <div class="option is-correct">
+                    <span class="key">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                    </span>
+                    <span class="label">Edmonton</span>
+                  </div>
+                  <div class="option" style="opacity:.4">
+                    <span class="key">C</span>
+                    <span class="label">Montreal</span>
+                  </div>
+                  <div class="option" style="opacity:.4">
+                    <span class="key">D</span>
+                    <span class="label">Vancouver</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hint">Next question in 1s</div>
+            </div>
+
+            <div class="home"></div>
+          </div>
+        </div>
+        <div class="state-label">Correct · check fades in</div>
+      </div>
+
+      <!-- ============== FR — Active state ============== -->
+      <div class="pair-col">
+        <div class="pair-tag">Français · En cours</div>
+        <div class="phone">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="status">
+              <span>9:41</span>
+              <span class="right">
+                <svg width="18" height="11" viewBox="0 0 18 11"><rect x="0" y="3" width="3" height="8" rx="1" fill="#fff"/><rect x="5" y="1" width="3" height="10" rx="1" fill="#fff"/><rect x="10" y="0" width="3" height="11" rx="1" fill="#fff"/><rect x="15" y="2" width="3" height="9" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+                <svg width="26" height="11" viewBox="0 0 26 11"><rect x="0.5" y="0.5" width="22" height="10" rx="3" fill="none" stroke="#fff" stroke-opacity=".5"/><rect x="2" y="2" width="19" height="7" rx="1.5" fill="#fff"/><rect x="23" y="3" width="2" height="5" rx="1" fill="#fff" fill-opacity=".5"/></svg>
+              </span>
+            </div>
+
+            <div class="live">
+              <span class="stat">Sports</span>
+              <span class="sep"></span>
+              <span class="stat"><span class="v">7</span> / 10</span>
+              <span class="sep"></span>
+              <span class="stat">Série <span class="v">6</span></span>
+            </div>
+
+            <div class="topbar">
+              <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6l-12 12"/></svg></div>
+              <div class="seg"><span>EN</span><span class="on">FR</span></div>
+              <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.5 12a4.5 4.5 0 0 0-2.5-4"/></svg></div>
+            </div>
+
+            <div class="stack">
+              <div class="peek p1"></div>
+              <div class="peek p2"></div>
+
+              <div class="card">
+                <div class="timer-rail"><div class="timer-fill"></div></div>
+
+                <div class="meta">
+                  <span class="badge">Sports canadiens</span>
+                  <div class="difficulty">
+                    <span class="pip on"></span><span class="pip on"></span><span class="pip on"></span>
+                    <span style="margin-left:4px">Difficile</span>
+                  </div>
+                  <div class="timer-num"><b>12</b>s</div>
+                </div>
+
+                <div class="question">
+                  Quelle ville canadienne a accueilli la première Classique héritage en plein air de la LNH en 2003 ?
+                </div>
+
+                <div class="options">
+                  <div class="option">
+                    <span class="key">A</span><span class="label">Toronto</span>
+                  </div>
+                  <div class="option is-hover">
+                    <span class="key">B</span><span class="label">Edmonton</span>
+                  </div>
+                  <div class="option">
+                    <span class="key">C</span><span class="label">Montréal</span>
+                  </div>
+                  <div class="option">
+                    <span class="key">D</span><span class="label">Vancouver</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hint">Touche une réponse</div>
+            </div>
+
+            <div class="home"></div>
+          </div>
+        </div>
+        <div class="state-label">Par défaut · Sélection B</div>
+      </div>
+
+    </div>
+
+    <div class="legend">
+      <h3>v4 — What this question screen is, and what it isn't</h3>
+      <ul>
+        <li><strong>Layout kept from v3:</strong> card stack with subtle <code>rotate(-1deg)</code> lean and two peek cards beneath, horizontal pulse timer at the top of the card, Live Activity pill below the notch, A/B/C/D option pills.</li>
+        <li><strong>Color stripped:</strong> no Sports red, no category tint anywhere on this screen. Card and options share the same monochrome surface (<code>--bg-2</code> / <code>--bg-3</code>). Timer is solid white. Question text has no gradient accent.</li>
+        <li><strong>Effects stripped:</strong> no confetti, no glow halo on the timer, no glow on the correct border, no XP burst floating up, no card-flying-out animation. Correct = a green border + a small check inside the key slot. Done.</li>
+        <li><strong>Gamification stripped:</strong> Live pill says "Streak 7" as plain text — no flame, no flicker, no "+10 XP". Wrong answers simply dim to 40% opacity.</li>
+        <li><strong>Bilingual stress test:</strong> French copy still ~28% longer ("Touche une réponse" / "Tap an answer"). Layout holds.</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

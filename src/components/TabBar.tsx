@@ -6,12 +6,12 @@ import { useEffect, useState } from "react"
 import { Lang } from "@/data/types"
 import { ui } from "@/data/ui-strings"
 import { loadLang } from "@/lib/preferences"
-import { PlayIcon, StatsIcon, GearIcon } from "./icons"
+import { PlayTabIcon, StatsTabIcon, SettingsTabIcon } from "./icons"
 
 const tabs = [
-  { href: "/", labelKey: "tabPlay", Icon: PlayIcon },
-  { href: "/stats", labelKey: "tabStats", Icon: StatsIcon },
-  { href: "/settings", labelKey: "tabSettings", Icon: GearIcon },
+  { href: "/", labelKey: "tabPlay", Icon: PlayTabIcon },
+  { href: "/stats", labelKey: "tabStats", Icon: StatsTabIcon },
+  { href: "/settings", labelKey: "tabSettings", Icon: SettingsTabIcon },
 ] as const
 
 export default function TabBar() {
@@ -29,9 +29,13 @@ export default function TabBar() {
 
   return (
     <nav
-      className="ios-tabbar fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around"
+      className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around"
       style={{
-        paddingTop: 6,
+        background: "rgba(0, 0, 0, 0.7)",
+        backdropFilter: "blur(30px) saturate(140%)",
+        WebkitBackdropFilter: "blur(30px) saturate(140%)",
+        borderTop: "1px solid var(--separator)",
+        paddingTop: 8,
         paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 10px)",
       }}
     >
@@ -41,15 +45,15 @@ export default function TabBar() {
           <Link
             key={href}
             href={href}
-            className="flex-1 flex flex-col items-center justify-center gap-[3px] py-2 px-1 transition-colors"
+            className="press flex flex-1 flex-col items-center justify-center gap-[3px] px-1 py-1.5"
             style={{
-              color: active ? "var(--ca-red)" : "var(--ios-label-tertiary)",
+              color: active ? "var(--ink-100)" : "var(--ink-40)",
               fontSize: 10,
               fontWeight: 600,
-              letterSpacing: "0.01em",
+              letterSpacing: "-0.005em",
             }}
           >
-            <Icon />
+            <Icon width={22} height={22} />
             <span>{ui[labelKey][lang]}</span>
           </Link>
         )

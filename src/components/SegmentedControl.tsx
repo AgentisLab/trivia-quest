@@ -10,6 +10,7 @@ interface Props<T extends string | number> {
   value: T
   onChange: (value: T) => void
   ariaLabel?: string
+  size?: "sm" | "md"
 }
 
 export default function SegmentedControl<T extends string | number>({
@@ -17,13 +18,24 @@ export default function SegmentedControl<T extends string | number>({
   value,
   onChange,
   ariaLabel,
+  size = "md",
 }: Props<T>) {
+  const padding = size === "sm" ? "3px" : "3px"
+  const itemPadding = size === "sm" ? "5px 12px" : "8px 16px"
+  const fontSize = size === "sm" ? 12 : 13
+
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className="inline-flex w-full rounded-[10px] p-[2px] gap-[2px]"
-      style={{ background: "var(--ios-fill-tertiary)" }}
+      className="inline-flex w-full"
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--separator)",
+        borderRadius: 999,
+        padding,
+        gap: 2,
+      }}
     >
       {options.map((option) => {
         const active = option.value === value
@@ -33,14 +45,17 @@ export default function SegmentedControl<T extends string | number>({
             role="tab"
             aria-selected={active}
             onClick={() => onChange(option.value)}
-            className="flex-1 rounded-[8px] py-1.5 text-center cursor-pointer transition-all duration-200"
+            className="press flex-1 cursor-pointer text-center"
             style={{
-              background: active ? "var(--ios-surface)" : "transparent",
-              color: active ? "var(--ios-label)" : "var(--ios-label-secondary)",
-              boxShadow: active ? "0 1px 2px rgba(15, 15, 25, 0.10)" : "none",
-              fontSize: 14,
+              padding: itemPadding,
+              borderRadius: 999,
+              border: 0,
+              background: active ? "var(--ink-100)" : "transparent",
+              color: active ? "#000" : "var(--ink-60)",
+              fontSize,
               fontWeight: 600,
-              letterSpacing: "-0.01em",
+              letterSpacing: "-0.005em",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {option.label}

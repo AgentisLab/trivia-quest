@@ -1,46 +1,76 @@
 import { Lang } from "./types"
 
 export const ui: Record<string, Record<Lang, string>> = {
-  title: { en: "Canadian Trivia Quest", fr: "Quête trivia canadienne" },
-  subtitle: { en: "Pick a category and go.", fr: "Choisis une catégorie, c'est parti." },
-  pretitle: { en: "Canadian Trivia Quest", fr: "Quête trivia canadienne" },
-  heroMeta: { en: "Customizable game length · timed · scored by difficulty", fr: "Durée personnalisable · chronométré · pointage par difficulté" },
-  chooseCategory: { en: "Categories", fr: "Catégories" },
-  questionsPerGame: { en: "Customizable game length", fr: "Durée personnalisable" },
+  // Brand
+  appName: { en: "Trivia Quest", fr: "Quête trivia" },
+
+  // Menu
+  greetingMorning: { en: "Good morning", fr: "Bon matin" },
+  greetingAfternoon: { en: "Good afternoon", fr: "Bon après-midi" },
+  greetingEvening: { en: "Good evening", fr: "Bonsoir" },
+  menuTitle: { en: "Tonight's quest.", fr: "Ta quête de ce soir." },
+
+  sectionFeatured: { en: "Featured", fr: "À l'affiche" },
+  sectionTrending: { en: "Tonight's most played", fr: "Les plus joués ce soir" },
+  sectionAll: { en: "All categories", fr: "Toutes les catégories" },
+
   recommended: { en: "Recommended", fr: "Recommandé" },
   randomMix: { en: "Random Mix", fr: "Mélange aléatoire" },
-  randomMixDesc: { en: "easy → expert", fr: "facile → expert" },
+  randomMixDesc: { en: "All 12 categories", fr: "Toutes les catégories" },
+
   questionsLabel: { en: "questions", fr: "questions" },
   questionsCount: { en: "Qs", fr: "Qs" },
-  gameLengthLabel: { en: "Game length", fr: "Durée de la partie" },
-  quit: { en: "‹ Quit", fr: "‹ Quitter" },
-  pts: { en: "pts", fr: "pts" },
+  secondsEach: { en: "20s each", fr: "20 s chacune" },
+
+  trendingNumberOne: { en: "No. 1", fr: "№ 1" },
+  trendingTag: { en: "Trending", fr: "Tendance" },
+  newTag: { en: "New", fr: "Nouveau" },
+  addedThisWeek: { en: "added this week", fr: "ajouté cette semaine" },
+
+  liveDayStreak: { en: "day streak", fr: "jours d'affilée" },
+  livePlayed: { en: "played", fr: "parties" },
+  liveStreak: { en: "Streak", fr: "Série" },
+
+  // Game length
+  gameLengthPickerLabel: { en: "Questions per round", fr: "Questions par partie" },
+
+  // Game
   question: { en: "Question", fr: "Question" },
   of: { en: "of", fr: "sur" },
   easy: { en: "Easy", fr: "Facile" },
   medium: { en: "Medium", fr: "Moyen" },
   hard: { en: "Hard", fr: "Difficile" },
   expert: { en: "Expert", fr: "Expert" },
+  pts: { en: "pts", fr: "pts" },
   pt: { en: "pt", fr: "pt" },
-  correct: { en: "Correct! ", fr: "Bonne réponse! " },
-  wrong: { en: "Wrong. The correct answer was", fr: "Faux. La bonne réponse était" },
-  timesUp: { en: "Time's up. The correct answer was", fr: "Temps écoulé. La bonne réponse était" },
-  gameOver: { en: "Round complete", fr: "Partie terminée" },
-  scoreBreakdown: { en: "Score Breakdown", fr: "Détails du score" },
-  playAgain: { en: "Play Again", fr: "Rejouer" },
-  chooseAnother: { en: "Choose Category", fr: "Choisir une catégorie" },
-  questionsCorrect: { en: "questions correct", fr: "bonnes réponses" },
-  easyLabel: { en: "Easy (1pt)", fr: "Facile (1pt)" },
-  mediumLabel: { en: "Medium (2pts)", fr: "Moyen (2pts)" },
-  hardLabel: { en: "Hard (3pts)", fr: "Difficile (3pts)" },
-  expertLabel: { en: "Expert (4pts)", fr: "Expert (4pts)" },
+  tapAnswer: { en: "Tap an answer", fr: "Touche une réponse" },
+  nextIn: { en: "Next question", fr: "Question suivante" },
+  quitGameTitle: { en: "Quit game?", fr: "Quitter la partie?" },
+  quitGameBody: { en: "Your progress in this round will be lost.", fr: "Ta progression dans cette partie sera perdue." },
+  quitConfirm: { en: "Quit", fr: "Quitter" },
+  quitCancel: { en: "Continue playing", fr: "Continuer la partie" },
+
+  // Results
+  summary: { en: "Summary", fr: "Récap" },
+  accuracy: { en: "accuracy", fr: "précision" },
+  bestStreak: { en: "Best streak", fr: "Meilleure série" },
+  inARow: { en: "in a row", fr: "d'affilée" },
+  totalTime: { en: "Total time", fr: "Temps total" },
+  avgPerQuestion: { en: "Average per question", fr: "Moyenne par question" },
+  dayStreakLabel: { en: "Day streak", fr: "Série quotidienne" },
+  daysUnit: { en: "days", fr: "jours" },
+  byDifficulty: { en: "By difficulty", fr: "Par difficulté" },
+  playAgain: { en: "Play again", fr: "Rejouer" },
+  chooseAnother: { en: "Choose another", fr: "Choisir une autre" },
+
   // Tab bar
   tabPlay: { en: "Play", fr: "Jouer" },
   tabStats: { en: "Stats", fr: "Stats" },
   tabSettings: { en: "Settings", fr: "Réglages" },
+
   // Stats page
   statsTitle: { en: "Stats", fr: "Statistiques" },
-  statsEmpty: { en: "Play your first game to see stats.", fr: "Joue ta première partie pour voir tes statistiques." },
+  statsEmpty: { en: "Play your first round to see stats.", fr: "Joue ta première partie pour voir tes statistiques." },
   statTotalGames: { en: "Games played", fr: "Parties jouées" },
   statAccuracy: { en: "Overall accuracy", fr: "Précision globale" },
   statBestScore: { en: "Best score", fr: "Meilleur score" },
@@ -49,7 +79,7 @@ export const ui: Record<string, Record<Lang, string>> = {
   statByCategory: { en: "By category", fr: "Par catégorie" },
   statSummary: { en: "Summary", fr: "Sommaire" },
   statStreaks: { en: "Streaks", fr: "Séries" },
-  statsResetConfirm: { en: "Reset all stats? This cannot be undone.", fr: "Réinitialiser toutes les statistiques? Cette action est irréversible." },
+
   // Settings page
   settingsTitle: { en: "Settings", fr: "Réglages" },
   settingsLanguage: { en: "Language", fr: "Langue" },
@@ -58,6 +88,5 @@ export const ui: Record<string, Record<Lang, string>> = {
   settingsHaptics: { en: "Haptics", fr: "Vibrations" },
   settingsData: { en: "Data", fr: "Données" },
   settingsResetStats: { en: "Reset stats", fr: "Réinitialiser les statistiques" },
-  // Game length picker
-  gameLengthPickerLabel: { en: "Questions per round", fr: "Questions par partie" },
+  statsResetConfirm: { en: "Reset all stats? This cannot be undone.", fr: "Réinitialiser toutes les statistiques? Cette action est irréversible." },
 }

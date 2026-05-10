@@ -1,0 +1,774 @@
+<!doctype html>
+<!--
+  Canadian Trivia Quest — Question screen (v2: gradient banner, glassmorphic options)
+  ----------------------------------------------------------------------------------
+  v1's question screen was a quiet white card. v2 carries the category's gradient as a
+  full top banner (with the timer ring as a glowing centerpiece), then drops the question
+  on a tinted background where the answer cards are glassmorphic — translucent surfaces
+  over the category color, with frosted blur. Three states: default, pressed, correct
+  feedback (with a confetti-vibe ring burst). Sample question is a real one from the
+  pop-culture pool ("Justin Bieber discovered on which platform"), shown in pink (Pop
+  Culture identity).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Canadian Trivia Quest — v2 Question</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --ios-bg: #f2f2f7;
+    --ios-surface: #ffffff;
+    --ios-label: #000000;
+    --ios-label-secondary: #3c3c4399;
+    --ios-label-tertiary: #3c3c434c;
+    --ios-separator: #3c3c4329;
+    --ios-fill-tertiary: #76768028;
+
+    --sys-red: #ff3b30;
+    --sys-green: #34c759;
+    --sys-green-deep: #248a3d;
+    --sys-orange: #ff9500;
+    --sys-blue: #007aff;
+    --sys-pink: #ff2d55;
+    --sys-pink-deep: #d30f45;
+    --sys-purple: #af52de;
+    --sys-yellow: #ffcc00;
+
+    --ca-red: #d52b1e;
+
+    --type-display: 32px;
+    --type-title-1: 28px;
+    --type-title-2: 22px;
+    --type-headline: 17px;
+    --type-body: 17px;
+    --type-callout: 16px;
+    --type-subhead: 15px;
+    --type-footnote: 13px;
+    --type-caption-1: 12px;
+    --type-caption-2: 11px;
+
+    --radius-card: 22px;
+    --radius-button: 18px;
+    --radius-pill: 999px;
+
+    --shadow-card: 0 1px 2px rgba(15, 15, 25, 0.06), 0 8px 24px rgba(15, 15, 25, 0.08);
+    --shadow-card-hover: 0 4px 6px rgba(15, 15, 25, 0.08), 0 18px 36px rgba(15, 15, 25, 0.14);
+    --shadow-banner: 0 12px 28px rgba(211, 15, 69, 0.32);
+
+    --font-rounded: "SF Pro Rounded", -apple-system, ui-rounded, "Nunito", system-ui, sans-serif;
+    --font-system: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Nunito", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-system);
+    background: #e5e5ea;
+    color: var(--ios-label);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+    min-height: 100vh;
+  }
+
+  .review {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 32px;
+    padding: 48px 24px 80px;
+  }
+  .review-header { text-align: center; max-width: 760px; }
+  .review-header h1 {
+    font-family: var(--font-rounded);
+    font-size: 24px; font-weight: 800; margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .review-header p { font-size: 14px; color: #6e6e73; margin: 0; }
+
+  .frames {
+    display: flex; flex-wrap: wrap; gap: 36px; justify-content: center;
+  }
+  .frame {
+    width: 414px; height: 868px;
+    border-radius: 56px;
+    background: #0b0b0d;
+    padding: 12px;
+    box-shadow: 0 30px 80px rgba(15, 15, 25, 0.18), 0 8px 24px rgba(15, 15, 25, 0.10);
+    position: relative;
+  }
+  .frame::after {
+    content: ""; position: absolute;
+    top: 22px; left: 50%; transform: translateX(-50%);
+    width: 124px; height: 36px;
+    background: #0b0b0d; border-radius: 22px; z-index: 100;
+  }
+  .frame-screen {
+    width: 100%; height: 100%;
+    border-radius: 44px; overflow: hidden;
+    background: var(--ios-bg);
+    position: relative;
+  }
+  .frame-label {
+    text-align: center; color: #6e6e73;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-top: 16px;
+  }
+
+  .app {
+    height: 100%;
+    display: flex; flex-direction: column;
+    background: #f7f5fb;
+    position: relative;
+  }
+
+  /* ----------------------------------------------------------- */
+  /* GRADIENT BANNER (carries category color)                    */
+  /* Pop Culture variant: pink                                   */
+  /* ----------------------------------------------------------- */
+  .banner {
+    position: relative;
+    padding: 64px 22px 28px;
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgba(255, 200, 60, 0.30) 0%, transparent 55%),
+      radial-gradient(80% 60% at 0% 100%, rgba(175, 82, 222, 0.45) 0%, transparent 60%),
+      linear-gradient(160deg, #ff7aab 0%, #d30f45 100%);
+    color: #ffffff;
+    border-radius: 0 0 36px 36px;
+    overflow: hidden;
+    box-shadow: var(--shadow-banner);
+  }
+  .banner.history {
+    background:
+      radial-gradient(100% 70% at 0% 100%, rgba(255, 220, 140, 0.30) 0%, transparent 60%),
+      linear-gradient(160deg, #d3a070 0%, #7f6545 100%);
+    box-shadow: 0 12px 28px rgba(127, 101, 69, 0.30);
+  }
+  .banner.science {
+    background:
+      radial-gradient(80% 60% at 100% 0%, rgba(255, 255, 255, 0.30) 0%, transparent 50%),
+      linear-gradient(160deg, #5fdcf0 0%, #008299 100%);
+    box-shadow: 0 12px 28px rgba(0, 130, 153, 0.32);
+  }
+
+  /* Status bar over banner */
+  .status-bar {
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 54px; padding: 18px 28px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 15px; font-weight: 600;
+    color: #ffffff;
+    z-index: 20;
+  }
+  .status-bar .icons { display: flex; align-items: center; gap: 6px; }
+
+  .banner-top {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    position: relative; z-index: 2;
+  }
+  .quit-btn {
+    background: rgba(255, 255, 255, 0.20);
+    border: 0;
+    color: #fff;
+    font: inherit;
+    font-weight: 700;
+    font-size: var(--type-subhead);
+    padding: 7px 12px 7px 8px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .cat-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(0, 0, 0, 0.18);
+    padding: 6px 12px 6px 6px;
+    border-radius: var(--radius-pill);
+    font-size: var(--type-footnote);
+    font-weight: 700;
+    color: #fff;
+    backdrop-filter: blur(10px);
+  }
+  .cat-pill .cat-emoji {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px;
+  }
+  .score-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #fff;
+    color: var(--sys-pink-deep);
+    padding: 7px 12px;
+    border-radius: var(--radius-pill);
+    font-size: var(--type-footnote);
+    font-weight: 800;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Progress bar */
+  .progress {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.22);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 22px;
+    position: relative; z-index: 2;
+  }
+  .progress .fill {
+    height: 100%;
+    background: linear-gradient(90deg, #fff 0%, #ffe07a 100%);
+    border-radius: 3px;
+    box-shadow: 0 0 12px rgba(255, 224, 122, 0.6);
+    transition: width 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* Question meta row + timer */
+  .q-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px;
+    position: relative; z-index: 2;
+  }
+  .q-meta {
+    display: flex; flex-direction: column; gap: 6px;
+    flex: 1;
+  }
+  .q-count {
+    font-size: var(--type-caption-2);
+    font-weight: 800;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .difficulty-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: var(--type-caption-1);
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 5px 10px;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.20);
+    color: #fff;
+    backdrop-filter: blur(8px);
+    width: fit-content;
+  }
+  .difficulty-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: #ffe07a; }
+
+  /* TIMER RING — big & glowing */
+  .timer {
+    width: 86px; height: 86px;
+    flex-shrink: 0;
+    position: relative;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.20));
+  }
+  .timer svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+  .timer .track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.25);
+    stroke-width: 7;
+  }
+  .timer .arc {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear, stroke 300ms ease;
+    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
+  }
+  .timer.warn .arc { stroke: #ffe07a; filter: drop-shadow(0 0 8px rgba(255, 224, 122, 0.8)); }
+  .timer.danger .arc {
+    stroke: #fff;
+    animation: pulse 0.9s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.95));
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+  .timer .label {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-rounded);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  }
+
+  /* ----------------------------------------------------------- */
+  /* QUESTION + ANSWERS BODY                                     */
+  /* ----------------------------------------------------------- */
+  .body {
+    flex: 1;
+    padding: 26px 22px 32px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    /* Subtle tint that complements the banner */
+    background:
+      radial-gradient(80% 60% at 50% 0%, rgba(255, 122, 171, 0.12) 0%, transparent 60%),
+      #f7f5fb;
+  }
+  .body.history {
+    background:
+      radial-gradient(80% 60% at 50% 0%, rgba(211, 160, 112, 0.15) 0%, transparent 60%),
+      #faf6f1;
+  }
+  .body.science {
+    background:
+      radial-gradient(80% 60% at 50% 0%, rgba(95, 220, 240, 0.14) 0%, transparent 60%),
+      #f3fbfd;
+  }
+
+  .question-text {
+    font-family: var(--font-rounded);
+    font-size: var(--type-display);
+    font-weight: 800;
+    line-height: 1.14;
+    letter-spacing: -0.025em;
+    color: var(--ios-label);
+    margin: 0 0 26px;
+  }
+
+  .answers {
+    display: flex; flex-direction: column;
+    gap: 12px;
+  }
+  .answer {
+    background: rgba(255, 255, 255, 0.72);
+    border-radius: var(--radius-button);
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    padding: 16px 16px 16px 12px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    box-shadow:
+      0 1px 2px rgba(15, 15, 25, 0.04),
+      0 8px 20px rgba(211, 15, 69, 0.08);
+    transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 180ms ease,
+                background 180ms ease,
+                border-color 180ms ease;
+    text-align: left; width: 100%; font: inherit; color: inherit;
+    position: relative;
+  }
+  .answer:hover { box-shadow: 0 2px 4px rgba(15, 15, 25, 0.06), 0 14px 28px rgba(211, 15, 69, 0.14); }
+  .answer:active, .answer.pressed { transform: scale(0.97); }
+
+  .answer .key {
+    flex-shrink: 0;
+    width: 40px; height: 40px;
+    border-radius: 14px;
+    background: rgba(0, 0, 0, 0.06);
+    color: var(--ios-label);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-rounded);
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+  .answer .text {
+    flex: 1;
+    font-size: var(--type-body);
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ios-label);
+    letter-spacing: -0.01em;
+  }
+  .answer .icon-result {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #fff;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: opacity 200ms ease, transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* States */
+  .answer.pressed {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--sys-pink);
+    box-shadow:
+      0 0 0 4px rgba(255, 45, 85, 0.18),
+      0 8px 20px rgba(211, 15, 69, 0.18);
+  }
+  .answer.pressed .key {
+    background: linear-gradient(135deg, var(--sys-pink), var(--sys-pink-deep));
+    color: #fff;
+  }
+  .answer.correct {
+    background: rgba(232, 252, 234, 0.95);
+    border-color: var(--sys-green);
+    box-shadow:
+      0 0 0 5px rgba(52, 199, 89, 0.20),
+      0 8px 20px rgba(52, 199, 89, 0.18);
+    animation: lift 380ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes lift {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+  .answer.correct .key {
+    background: linear-gradient(135deg, #5cd97a, var(--sys-green-deep));
+    color: #fff;
+  }
+  .answer.correct .icon-result {
+    background: var(--sys-green);
+    opacity: 1; transform: scale(1);
+  }
+  .answer.dimmed { opacity: 0.45; }
+
+  /* Confetti burst on correct (decorative SVG layered over body) */
+  .confetti {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 30;
+  }
+  .confetti span {
+    position: absolute;
+    width: 8px; height: 14px;
+    border-radius: 2px;
+    opacity: 0.92;
+    transform-origin: center;
+  }
+  .confetti span:nth-child(1)  { top: 18%; left: 12%; background: var(--sys-pink); transform: rotate(10deg); }
+  .confetti span:nth-child(2)  { top: 14%; left: 28%; background: var(--sys-yellow); transform: rotate(-12deg); }
+  .confetti span:nth-child(3)  { top: 22%; left: 46%; background: var(--sys-green); transform: rotate(28deg); }
+  .confetti span:nth-child(4)  { top: 16%; left: 64%; background: var(--sys-blue); transform: rotate(-22deg); }
+  .confetti span:nth-child(5)  { top: 24%; left: 80%; background: var(--sys-purple); transform: rotate(14deg); }
+  .confetti span:nth-child(6)  { top: 38%; left: 8%;  background: var(--sys-orange); transform: rotate(35deg); }
+  .confetti span:nth-child(7)  { top: 32%; left: 88%; background: var(--sys-pink); transform: rotate(-18deg); border-radius: 50%; width: 8px; height: 8px; }
+  .confetti span:nth-child(8)  { top: 52%; left: 18%; background: var(--sys-yellow); transform: rotate(8deg); border-radius: 50%; width: 7px; height: 7px; }
+  .confetti span:nth-child(9)  { top: 46%; left: 72%; background: var(--sys-green); transform: rotate(-30deg); }
+  .confetti span:nth-child(10) { top: 60%; left: 50%; background: var(--sys-orange); transform: rotate(45deg); border-radius: 50%; width: 6px; height: 6px; }
+
+  /* Feedback toast */
+  .feedback {
+    margin-top: 22px;
+    padding: 14px 18px;
+    border-radius: var(--radius-button);
+    background: linear-gradient(135deg, #5cd97a 0%, #248a3d 100%);
+    color: #fff;
+    font-size: var(--type-headline);
+    font-weight: 800;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    box-shadow: 0 10px 24px rgba(36, 138, 61, 0.30);
+  }
+  .feedback .left { display: flex; align-items: center; gap: 12px; }
+  .feedback .icon-circle {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    display: inline-flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+  }
+  .feedback .points {
+    font-family: var(--font-rounded);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+
+  .body-spacer { flex: 1; }
+
+  .home-indicator {
+    position: absolute;
+    bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px;
+    background: rgba(0, 0, 0, 0.85);
+    border-radius: 3px;
+    z-index: 11;
+  }
+
+  .caption {
+    color: #8e8e93;
+    font-size: 12px;
+    margin-top: 10px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 920px;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 1300px) {
+    .frames { gap: 28px; }
+    .frame { transform: scale(0.92); transform-origin: top center; }
+  }
+  @media (max-width: 900px) {
+    .frames { flex-direction: column; gap: 32px; }
+    .frame { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="review">
+  <div class="review-header">
+    <h1>Canadian Trivia Quest — Question (v2)</h1>
+    <p>Three states · gradient banner per category · glassmorphic answers · big glowing timer · confetti on correct.</p>
+  </div>
+
+  <div class="frames">
+
+    <!-- ===================== STATE 1: DEFAULT (POP CULTURE / PINK) ===================== -->
+    <div>
+      <div class="frame">
+        <div class="frame-screen">
+          <div class="app">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="icons">
+                <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><path d="M1 4a1 1 0 011-1h1v5H2a1 1 0 01-1-1V4zM5 2.5a1 1 0 011-1h1V8H6a1 1 0 01-1-1V2.5zM9 1a1 1 0 011-1h1v8h-1a1 1 0 01-1-1V1zM13 .5h1.5A1.5 1.5 0 0116 2v5.5a1.5 1.5 0 01-1.5 1.5H13V.5z" fill="currentColor"/></svg>
+                <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+              </div>
+            </div>
+
+            <header class="banner">
+              <div class="banner-top">
+                <button class="quit-btn">‹ Quit</button>
+                <div class="cat-pill">
+                  <span class="cat-emoji">🎬</span>
+                  Pop Culture
+                </div>
+                <div class="score-pill">7 pts</div>
+              </div>
+              <div class="progress"><div class="fill" style="width: 30%;"></div></div>
+              <div class="q-row">
+                <div class="q-meta">
+                  <span class="q-count">Question 4 of 10</span>
+                  <span class="difficulty-pill"><span class="dot"></span>Easy · 1 pt</span>
+                </div>
+                <div class="timer">
+                  <svg viewBox="0 0 86 86">
+                    <circle class="track" cx="43" cy="43" r="38" />
+                    <circle class="arc" cx="43" cy="43" r="38"
+                            stroke-dasharray="238.76" stroke-dashoffset="36" />
+                  </svg>
+                  <div class="label">17</div>
+                </div>
+              </div>
+            </header>
+
+            <div class="body">
+              <h1 class="question-text">Justin Bieber was discovered on which platform in 2008?</h1>
+              <div class="answers">
+                <button class="answer">
+                  <span class="key">A</span>
+                  <span class="text">MySpace</span>
+                </button>
+                <button class="answer">
+                  <span class="key">B</span>
+                  <span class="text">YouTube</span>
+                </button>
+                <button class="answer">
+                  <span class="key">C</span>
+                  <span class="text">MuchMusic</span>
+                </button>
+                <button class="answer">
+                  <span class="key">D</span>
+                  <span class="text">Canadian Idol</span>
+                </button>
+              </div>
+              <div class="body-spacer"></div>
+            </div>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-label">EN · default · pink banner · timer 17s</div>
+    </div>
+
+    <!-- ===================== STATE 2: PRESSED (HISTORY / BROWN) ===================== -->
+    <div>
+      <div class="frame">
+        <div class="frame-screen">
+          <div class="app">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="icons">
+                <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><path d="M1 4a1 1 0 011-1h1v5H2a1 1 0 01-1-1V4zM5 2.5a1 1 0 011-1h1V8H6a1 1 0 01-1-1V2.5zM9 1a1 1 0 011-1h1v8h-1a1 1 0 01-1-1V1zM13 .5h1.5A1.5 1.5 0 0116 2v5.5a1.5 1.5 0 01-1.5 1.5H13V.5z" fill="currentColor"/></svg>
+                <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+              </div>
+            </div>
+
+            <header class="banner history">
+              <div class="banner-top">
+                <button class="quit-btn">‹ Quit</button>
+                <div class="cat-pill">
+                  <span class="cat-emoji">📜</span>
+                  Canadian History
+                </div>
+                <div class="score-pill" style="color: #7f6545;">7 pts</div>
+              </div>
+              <div class="progress"><div class="fill" style="width: 50%;"></div></div>
+              <div class="q-row">
+                <div class="q-meta">
+                  <span class="q-count">Question 6 of 10</span>
+                  <span class="difficulty-pill"><span class="dot"></span>Medium · 2 pts</span>
+                </div>
+                <div class="timer warn">
+                  <svg viewBox="0 0 86 86">
+                    <circle class="track" cx="43" cy="43" r="38" />
+                    <circle class="arc" cx="43" cy="43" r="38"
+                            stroke-dasharray="238.76" stroke-dashoffset="120" />
+                  </svg>
+                  <div class="label">9</div>
+                </div>
+              </div>
+            </header>
+
+            <div class="body history">
+              <h1 class="question-text">The Canadian Pacific Railway was completed in which year?</h1>
+              <div class="answers">
+                <button class="answer">
+                  <span class="key">A</span>
+                  <span class="text">1867</span>
+                </button>
+                <button class="answer">
+                  <span class="key">B</span>
+                  <span class="text">1876</span>
+                </button>
+                <button class="answer pressed">
+                  <span class="key">C</span>
+                  <span class="text">1885</span>
+                </button>
+                <button class="answer">
+                  <span class="key">D</span>
+                  <span class="text">1891</span>
+                </button>
+              </div>
+              <div class="body-spacer"></div>
+            </div>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-label">EN · pressed C · brown banner · timer 9s (amber)</div>
+    </div>
+
+    <!-- ===================== STATE 3: CORRECT FEEDBACK (FR / SCIENCE / TEAL) ===================== -->
+    <div>
+      <div class="frame">
+        <div class="frame-screen">
+          <div class="app">
+            <div class="status-bar">
+              <span>9:41</span>
+              <div class="icons">
+                <svg width="18" height="11" viewBox="0 0 18 11" fill="none"><path d="M1 4a1 1 0 011-1h1v5H2a1 1 0 01-1-1V4zM5 2.5a1 1 0 011-1h1V8H6a1 1 0 01-1-1V2.5zM9 1a1 1 0 011-1h1v8h-1a1 1 0 01-1-1V1zM13 .5h1.5A1.5 1.5 0 0116 2v5.5a1.5 1.5 0 01-1.5 1.5H13V.5z" fill="currentColor"/></svg>
+                <svg width="26" height="12" viewBox="0 0 26 12" fill="none"><rect x="0.5" y="0.5" width="22" height="11" rx="3" stroke="currentColor" opacity="0.4"/><rect x="2" y="2" width="19" height="8" rx="1.5" fill="currentColor"/><rect x="23.5" y="4" width="1.5" height="4" rx="0.5" fill="currentColor" opacity="0.4"/></svg>
+              </div>
+            </div>
+
+            <header class="banner science">
+              <div class="banner-top">
+                <button class="quit-btn">‹ Quitter</button>
+                <div class="cat-pill">
+                  <span class="cat-emoji">🔬</span>
+                  Science et tech.
+                </div>
+                <div class="score-pill" style="color: #008299;">11 pts</div>
+              </div>
+              <div class="progress"><div class="fill" style="width: 70%;"></div></div>
+              <div class="q-row">
+                <div class="q-meta">
+                  <span class="q-count">Question 8 sur 10</span>
+                  <span class="difficulty-pill"><span class="dot"></span>Difficile · 3 pts</span>
+                </div>
+                <div class="timer">
+                  <svg viewBox="0 0 86 86">
+                    <circle class="track" cx="43" cy="43" r="38" />
+                    <circle class="arc" cx="43" cy="43" r="38"
+                            stroke-dasharray="238.76" stroke-dashoffset="84" />
+                  </svg>
+                  <div class="label">12</div>
+                </div>
+              </div>
+            </header>
+
+            <div class="body science" style="position: relative;">
+              <h1 class="question-text">Quel scientifique canadien a co-découvert l'insuline en 1921?</h1>
+              <div class="answers">
+                <button class="answer dimmed">
+                  <span class="key">A</span>
+                  <span class="text">Alexander Graham Bell</span>
+                </button>
+                <button class="answer correct">
+                  <span class="key">B</span>
+                  <span class="text">Frederick Banting</span>
+                  <span class="icon-result">
+                    <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                      <path d="M2.5 7.2L5.6 10l5.9-6.3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                </button>
+                <button class="answer dimmed">
+                  <span class="key">C</span>
+                  <span class="text">Wilder Penfield</span>
+                </button>
+                <button class="answer dimmed">
+                  <span class="key">D</span>
+                  <span class="text">John Polanyi</span>
+                </button>
+              </div>
+
+              <div class="feedback">
+                <div class="left">
+                  <span class="icon-circle">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M2.5 7.2L5.6 10l5.9-6.3" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </span>
+                  <span>Bonne réponse!</span>
+                </div>
+                <span class="points">+3</span>
+              </div>
+
+              <div class="body-spacer"></div>
+
+              <!-- Confetti burst overlay -->
+              <div class="confetti" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+
+            <div class="home-indicator"></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-label">FR · correct · teal banner · confetti burst</div>
+    </div>
+
+  </div>
+
+  <p class="caption">
+    Spec — Banner uses category-specific gradient (12 variants); timer ring sits inside the banner
+    as a glowing circular meter (white→amber→pulse-white). Answer cards are translucent glass
+    over the body's tinted background, with frosted blur 20px / saturate 180%. Press: scale 0.97
+    + spring border in category color. Correct: green-glass card with spring lift (1 → 1.04 → 1)
+    + checkmark spring-in (260ms cubic-bezier(0.34, 1.56, 0.64, 1)) + 10-particle confetti burst
+    over body. Wrong: 4-cycle shake (±6px, 80ms) on selected, correct one animates green.
+    Auto-advance after 1500ms with horizontal slide.
+  </p>
+</div>
+
+</body>
+</html>

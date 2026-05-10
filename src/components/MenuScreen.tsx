@@ -1,99 +1,108 @@
 "use client"
 
+import { useEffect, useState, useMemo } from "react"
 import { Lang } from "@/data/types"
 import { Category, categories } from "@/data/questions"
 import { ui } from "@/data/ui-strings"
 import { GameLength, GAME_LENGTHS } from "@/lib/preferences"
-import LangToggle from "./LangToggle"
+import { TriviaStats, emptyStats, loadStats } from "@/lib/stats"
+import LiveActivityPill from "./LiveActivityPill"
 import SegmentedControl from "./SegmentedControl"
-import { ChevronRightIcon } from "./icons"
-import { categoryIconBg } from "./categoryIconColor"
+import { CategoryIcon, PlaySolidIcon } from "./icons"
 
 interface Props {
   lang: Lang
-  onLangChange: (lang: Lang) => void
   gameLength: GameLength
   onGameLengthChange: (length: GameLength) => void
   onSelectCategory: (cat: Category) => void
   onRandomMix: () => void
+  randomMixCount: number
+}
+
+const TRENDING_IDS = [11, 1] as const
+const SPOTLIGHT_ID = 12
+
+function greetingKey(): "greetingMorning" | "greetingAfternoon" | "greetingEvening" {
+  const h = new Date().getHours()
+  if (h < 12) return "greetingMorning"
+  if (h < 18) return "greetingAfternoon"
+  return "greetingEvening"
 }
 
 export default function MenuScreen({
   lang,
-  onLangChange,
   gameLength,
   onGameLengthChange,
   onSelectCategory,
   onRandomMix,
+  randomMixCount,
 }: Props) {
   const t = (key: string) => ui[key]?.[lang] || key
+  const [stats, setStats] = useState<TriviaStats>(emptyStats())
+
+  useEffect(() => {
+    setStats(loadStats())
+  }, [])
+
+  const trending = TRENDING_IDS.map((id) => categories.find((c) => c.id === id)).filter(
+    (c): c is Category => Boolean(c)
+  )
+  const spotlight = categories.find((c) => c.id === SPOTLIGHT_ID)
+  const standard = useMemo(
+    () =>
+      categories.filter(
+        (c) => !TRENDING_IDS.includes(c.id as 11 | 1) && c.id !== SPOTLIGHT_ID
+      ),
+    []
+  )
+
+  const greeting = t(greetingKey())
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--ios-bg)" }}>
-      {/* Translucent nav bar */}
-      <div
-        className="ios-nav sticky top-0 z-20 flex items-center justify-end"
-        style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 10px)",
-          paddingBottom: 10,
-          paddingLeft: 20,
-          paddingRight: 20,
-        }}
-      >
-        <LangToggle lang={lang} onChange={onLangChange} />
+    <div
+      className="min-h-screen flex flex-col"
+      style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
+    >
+      <div style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)" }}>
+        <LiveActivityPill
+          segments={[
+            { key: "streak", value: stats.currentStreak, label: t("liveDayStreak") },
+            { key: "played", value: stats.totalGames, label: t("livePlayed") },
+          ]}
+        />
       </div>
 
-      {/* Scroll body */}
-      <div className="flex-1 px-5 pb-32">
-        <div className="pt-2 pb-6">
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full font-semibold mb-3.5"
-            style={{
-              fontSize: 13,
-              letterSpacing: "0.02em",
-              color: "var(--ca-red)",
-              background: "var(--ca-red-soft)",
-              padding: "5px 10px",
-            }}
-          >
-            <span aria-hidden>🍁</span>
-            {t("pretitle")}
-          </span>
-          <h1
-            style={{
-              fontSize: "var(--type-large-title)",
-              fontWeight: 800,
-              lineHeight: 1.07,
-              letterSpacing: "-0.025em",
-              margin: 0,
-              color: "var(--ios-label)",
-            }}
-          >
-            {t("subtitle")}
-          </h1>
-          <p
-            className="mt-2 font-medium"
-            style={{ fontSize: "var(--type-subhead)", color: "var(--ios-label-secondary)", lineHeight: 1.4 }}
-          >
-            {t("heroMeta")}
-          </p>
-        </div>
+      <header className="px-[22px] pt-6 pb-2">
+        <p
+          className="m-0 mb-1.5"
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--ink-60)",
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {greeting}
+        </p>
+        <h1
+          className="m-0"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 32,
+            fontWeight: 700,
+            letterSpacing: "-0.025em",
+            lineHeight: 1.05,
+            color: "var(--ink-100)",
+          }}
+        >
+          {t("menuTitle")}
+        </h1>
+      </header>
 
+      <div className="flex-1 px-[18px] pb-[120px]">
         {/* Game length picker */}
-        <div className="mb-5">
-          <div className="flex items-center justify-between mb-2 px-1">
-            <span
-              style={{
-                fontSize: "var(--type-footnote)",
-                color: "var(--ios-label-secondary)",
-                fontWeight: 600,
-                letterSpacing: 0.02,
-                textTransform: "uppercase",
-              }}
-            >
-              {t("gameLengthPickerLabel")}
-            </span>
-          </div>
+        <div className="mb-2 mt-3">
+          <SectionLabel left={t("gameLengthPickerLabel")} right={`${gameLength} ${t("questionsLabel")}`} />
           <SegmentedControl
             ariaLabel={t("gameLengthPickerLabel")}
             value={gameLength}
@@ -102,171 +111,345 @@ export default function MenuScreen({
           />
         </div>
 
-        {/* Featured Random Mix */}
+        {/* Featured */}
+        <SectionLabel left={t("sectionFeatured")} right={`${randomMixCount} ${t("questionsLabel")}`} />
         <button
+          type="button"
           onClick={onRandomMix}
-          className="ios-press relative overflow-hidden w-full text-left mb-7"
+          className="press w-full text-left"
           style={{
-            padding: 22,
-            background: "linear-gradient(135deg, #ffffff 0%, #fff5f4 60%, #ffe9e6 100%)",
-            borderRadius: "var(--radius-card)",
-            border: "0.5px solid rgba(213, 43, 30, 0.18)",
-            boxShadow: "var(--shadow-card)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "18px",
+            height: 128,
+            borderRadius: 20,
+            background: "linear-gradient(180deg, #1a1a1c 0%, #0e0e10 100%)",
+            border: "1px solid var(--separator)",
             color: "inherit",
           }}
         >
-          <span
-            aria-hidden
-            className="pointer-events-none absolute"
-            style={{ right: -10, top: -10, fontSize: 100, opacity: 0.07, transform: "rotate(15deg)" }}
-          >
-            🍁
-          </span>
-          <div className="flex items-center gap-4 relative">
-            <div
-              className="flex items-center justify-center flex-shrink-0"
+          <div className="flex min-w-0 flex-col gap-1">
+            <p
+              className="m-0 mb-1"
               style={{
-                width: 56,
-                height: 56,
-                background: "var(--ca-red)",
-                color: "#fff",
-                borderRadius: 16,
-                fontSize: 28,
-                boxShadow: "0 6px 14px rgba(213, 43, 30, 0.32)",
+                fontSize: 11,
+                fontWeight: 600,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--ink-60)",
               }}
             >
-              🎲
-            </div>
-            <div className="flex-1 min-w-0">
-              <span
-                className="block"
-                style={{
-                  fontSize: 11,
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  color: "var(--ca-red-deep)",
-                  marginBottom: 4,
-                }}
-              >
-                {t("recommended")}
-              </span>
-              <p
-                className="m-0"
-                style={{ fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em", color: "var(--ios-label)" }}
-              >
-                {t("randomMix")}
-              </p>
-              <p className="m-0 mt-0.5" style={{ fontSize: 14, color: "var(--ios-label-secondary)" }}>
-                {gameLength} {t("questionsLabel")} · {t("randomMixDesc")}
-              </p>
-            </div>
-            <span style={{ color: "var(--ios-label-tertiary)", flexShrink: 0 }}>
-              <ChevronRightIcon />
-            </span>
+              {t("recommended")}
+            </p>
+            <p
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 22,
+                fontWeight: 700,
+                letterSpacing: "-0.02em",
+                color: "var(--ink-100)",
+                lineHeight: 1.1,
+              }}
+            >
+              {t("randomMix")}
+            </p>
+            <p
+              className="m-0 mt-1"
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                color: "var(--ink-60)",
+                letterSpacing: "-0.005em",
+              }}
+            >
+              {t("randomMixDesc")}
+            </p>
           </div>
-        </button>
-
-        {/* Section header */}
-        <div className="flex items-baseline justify-between px-1 pb-2.5 mt-1.5">
-          <h2
+          <span
+            aria-hidden
+            className="flex flex-shrink-0 items-center justify-center"
             style={{
-              fontSize: "var(--type-title-2)",
-              fontWeight: 700,
-              letterSpacing: "-0.02em",
-              color: "var(--ios-label)",
-              margin: 0,
+              width: 44,
+              height: 44,
+              borderRadius: "50%",
+              background: "var(--accent)",
+              color: "#fff",
             }}
           >
-            {t("chooseCategory")}
-          </h2>
-          <span style={{ fontSize: "var(--type-footnote)", fontWeight: 500, color: "var(--ios-label-secondary)" }}>
-            {categories.length} · 50 {t("questionsLabel")}
+            <PlaySolidIcon width={16} height={16} style={{ marginLeft: 2 }} />
           </span>
+        </button>
+
+        {/* Trending */}
+        <SectionLabel left={t("sectionTrending")} />
+        <div className="grid grid-cols-2 gap-2.5">
+          {trending.map((cat, i) => (
+            <MediumTile
+              key={cat.id}
+              cat={cat}
+              lang={lang}
+              tag={i === 0 ? t("trendingNumberOne") : t("trendingTag")}
+              onClick={() => onSelectCategory(cat)}
+              t={t}
+            />
+          ))}
         </div>
 
-        {/* Category grouped table */}
-        <div
-          className="overflow-hidden"
-          style={{
-            background: "var(--ios-surface)",
-            borderRadius: "var(--radius-card)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
-          {categories.map((cat, i) => (
-            <button
+        {/* All categories */}
+        <SectionLabel left={t("sectionAll")} right={String(categories.length)} />
+        <div className="grid grid-cols-2 gap-2.5">
+          {standard.map((cat) => (
+            <StandardTile
               key={cat.id}
+              cat={cat}
+              lang={lang}
               onClick={() => onSelectCategory(cat)}
-              className="ios-press relative w-full flex items-center text-left"
-              style={{ padding: "14px 16px", gap: 14, background: "transparent", color: "inherit" }}
-            >
-              {i > 0 && (
-                <span
-                  className="ios-separator absolute"
-                  style={{ top: 0, left: 70, right: 16, height: "0.5px" }}
-                  aria-hidden
-                />
-              )}
-              <div
-                className="flex items-center justify-center flex-shrink-0"
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: categoryIconBg(cat.id),
-                  fontSize: 22,
-                }}
-              >
-                {cat.icon}
-              </div>
-              <div className="flex-1 min-w-0">
-                <span
-                  className="block"
-                  style={{
-                    fontSize: "var(--type-headline)",
-                    fontWeight: 600,
-                    color: "var(--ios-label)",
-                    lineHeight: 1.25,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {cat.name[lang]}
-                </span>
-                <span
-                  className="block overflow-hidden"
-                  style={{
-                    fontSize: "var(--type-footnote)",
-                    color: "var(--ios-label-secondary)",
-                    lineHeight: 1.35,
-                    marginTop: 2,
-                    display: "-webkit-box",
-                    WebkitLineClamp: 1,
-                    WebkitBoxOrient: "vertical",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {cat.description[lang]}
-                </span>
-              </div>
-              <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                <span
-                  style={{
-                    fontSize: "var(--type-caption-1)",
-                    color: "var(--ios-label-secondary)",
-                    fontWeight: 500,
-                  }}
-                >
-                  {cat.questions.length} {t("questionsCount")}
-                </span>
-                <span style={{ color: "var(--ios-label-tertiary)" }}>
-                  <ChevronRightIcon />
-                </span>
-              </div>
-            </button>
+              t={t}
+            />
           ))}
+          {spotlight && (
+            <SpotlightTile
+              cat={spotlight}
+              lang={lang}
+              onClick={() => onSelectCategory(spotlight)}
+              t={t}
+            />
+          )}
         </div>
       </div>
     </div>
+  )
+}
+
+function SectionLabel({ left, right }: { left: string; right?: string }) {
+  return (
+    <div className="mx-1 mb-2.5 mt-[18px] flex items-baseline justify-between">
+      <span
+        style={{
+          fontSize: 12,
+          fontWeight: 600,
+          color: "var(--ink-60)",
+          letterSpacing: "-0.005em",
+        }}
+      >
+        {left}
+      </span>
+      {right && (
+        <span style={{ fontSize: 13, fontWeight: 500, color: "var(--ink-60)" }}>{right}</span>
+      )}
+    </div>
+  )
+}
+
+interface TileProps {
+  cat: Category
+  lang: Lang
+  onClick: () => void
+  t: (key: string) => string
+}
+
+function MediumTile({ cat, lang, tag, onClick }: TileProps & { tag: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="press text-left"
+      style={{
+        height: 118,
+        padding: 14,
+        borderRadius: 18,
+        background: "var(--bg-2)",
+        border: "1px solid var(--separator)",
+        color: "inherit",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      <div className="flex items-start justify-between">
+        <span
+          className="flex items-center justify-center"
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 9,
+            background: "var(--bg-3)",
+            color: "var(--ink-100)",
+          }}
+        >
+          <CategoryIcon id={cat.id} width={16} height={16} />
+        </span>
+        <span
+          style={{
+            fontSize: 10,
+            fontWeight: 600,
+            color: "var(--ink-60)",
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+          }}
+        >
+          {tag}
+        </span>
+      </div>
+      <div>
+        <p
+          className="m-0"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 17,
+            fontWeight: 600,
+            letterSpacing: "-0.015em",
+            color: "var(--ink-100)",
+            lineHeight: 1.1,
+          }}
+        >
+          {cat.name[lang]}
+        </p>
+        <p
+          className="m-0 mt-1"
+          style={{
+            fontSize: 12,
+            fontWeight: 500,
+            color: "var(--ink-60)",
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {cat.questions.length} Qs
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function StandardTile({ cat, lang, onClick }: TileProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="press text-left"
+      style={{
+        height: 104,
+        padding: 13,
+        borderRadius: 16,
+        background: "var(--bg-2)",
+        border: "1px solid var(--separator)",
+        color: "inherit",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+      }}
+    >
+      <span
+        className="flex items-center justify-center"
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 8,
+          background: "var(--bg-3)",
+          color: "var(--ink-100)",
+        }}
+      >
+        <CategoryIcon id={cat.id} width={15} height={15} />
+      </span>
+      <div>
+        <p
+          className="m-0"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: "-0.012em",
+            color: "var(--ink-100)",
+            lineHeight: 1.1,
+          }}
+        >
+          {cat.name[lang]}
+        </p>
+        <p
+          className="m-0 mt-0.5"
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: "var(--ink-60)",
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {cat.questions.length} Qs
+        </p>
+      </div>
+    </button>
+  )
+}
+
+function SpotlightTile({ cat, lang, onClick, t }: TileProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="press col-span-2 text-left"
+      style={{
+        height: 90,
+        padding: 13,
+        borderRadius: 16,
+        background: "var(--bg-2)",
+        border: "1px solid var(--separator)",
+        color: "inherit",
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+      }}
+    >
+      <span
+        className="flex flex-shrink-0 items-center justify-center"
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 9,
+          background: "var(--bg-3)",
+          color: "var(--ink-100)",
+        }}
+      >
+        <CategoryIcon id={cat.id} width={17} height={17} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p
+          className="m-0"
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: "-0.012em",
+            color: "var(--ink-100)",
+            lineHeight: 1.1,
+          }}
+        >
+          {cat.name[lang]}
+        </p>
+        <p
+          className="m-0 mt-0.5"
+          style={{
+            fontSize: 11,
+            fontWeight: 500,
+            color: "var(--ink-60)",
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {cat.questions.length} Qs · {t("addedThisWeek")}
+        </p>
+      </div>
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 600,
+          color: "var(--accent)",
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        {t("newTag")}
+      </span>
+    </button>
   )
 }

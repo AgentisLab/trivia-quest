@@ -13,13 +13,13 @@ export default function IOSSwitch({ checked, onChange, ariaLabel }: Props) {
       aria-checked={checked}
       aria-label={ariaLabel}
       onClick={() => onChange(!checked)}
-      className="relative inline-flex flex-shrink-0 cursor-pointer"
+      className="press relative inline-flex flex-shrink-0 cursor-pointer"
       style={{
         width: 51,
         height: 31,
         borderRadius: 999,
-        background: checked ? "var(--ios-green)" : "rgba(120, 120, 128, 0.16)",
-        border: 0,
+        background: checked ? "var(--accent)" : "var(--bg-3)",
+        border: "1px solid var(--separator)",
         padding: 0,
         transition: "background 200ms ease",
       }}
@@ -29,11 +29,11 @@ export default function IOSSwitch({ checked, onChange, ariaLabel }: Props) {
         style={{
           top: 2,
           left: checked ? 22 : 2,
-          width: 27,
-          height: 27,
+          width: 25,
+          height: 25,
           borderRadius: "50%",
           background: "#fff",
-          boxShadow: "0 3px 8px rgba(0,0,0,0.15), 0 1px 1px rgba(0,0,0,0.06)",
+          boxShadow: "0 2px 6px rgba(0,0,0,0.32)",
           transition: "left 200ms cubic-bezier(0.2, 0.8, 0.2, 1)",
         }}
       />

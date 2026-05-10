@@ -1,12 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Lang, Question } from "@/data/types"
 import { ui } from "@/data/ui-strings"
 import { triggerHaptic } from "@/lib/preferences"
-import Timer from "./Timer"
-import { CheckIcon, CrossIcon } from "./icons"
-import { categoryIconBg } from "./categoryIconColor"
+import LiveActivityPill from "./LiveActivityPill"
+import { CheckIcon, CloseIcon, CrossIcon } from "./icons"
 
 type AnswerKey = "A" | "B" | "C" | "D"
 
@@ -15,10 +14,8 @@ interface Props {
   question: Question
   questionIndex: number
   totalQuestions: number
-  score: number
-  categoryIcon: string
+  streak: number
   categoryName: string
-  categoryId: number | null
   selectedAnswer: AnswerKey | null
   showFeedback: boolean
   timerKey: number
@@ -27,22 +24,22 @@ interface Props {
   onQuit: () => void
 }
 
-const POINTS: Record<Question["difficulty"], number> = {
+const DIFFICULTY_PIPS: Record<Question["difficulty"], number> = {
   easy: 1,
   medium: 2,
   hard: 3,
   expert: 4,
 }
 
+const TIMER_DURATION = 20
+
 export default function GameScreen({
   lang,
   question,
   questionIndex,
   totalQuestions,
-  score,
-  categoryIcon,
+  streak,
   categoryName,
-  categoryId,
   selectedAnswer,
   showFeedback,
   timerKey,
@@ -51,380 +48,437 @@ export default function GameScreen({
   onQuit,
 }: Props) {
   const t = (key: string) => ui[key]?.[lang] || key
-  const points = POINTS[question.difficulty]
-  const progressPercent = (questionIndex / totalQuestions) * 100
-  const [shaking, setShaking] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(TIMER_DURATION)
+  const [confirmQuit, setConfirmQuit] = useState(false)
+  const timeUpFiredRef = useRef(false)
+
+  useEffect(() => {
+    setTimeLeft(TIMER_DURATION)
+    timeUpFiredRef.current = false
+  }, [timerKey])
+
+  useEffect(() => {
+    if (showFeedback || confirmQuit) return
+    if (timeLeft <= 0) {
+      if (!timeUpFiredRef.current) {
+        timeUpFiredRef.current = true
+        onTimeUp()
+      }
+      return
+    }
+    const id = setInterval(() => {
+      setTimeLeft((prev) => Math.max(prev - 1, 0))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [timeLeft, showFeedback, confirmQuit, onTimeUp])
 
   useEffect(() => {
     if (!showFeedback || !selectedAnswer) return
-    const isCorrect = selectedAnswer === question.answer
-    if (isCorrect) {
-      triggerHaptic([8, 40, 16])
-    } else {
-      triggerHaptic([14, 60, 14, 60, 14])
-      setShaking(true)
-      const timeout = setTimeout(() => setShaking(false), 360)
-      return () => clearTimeout(timeout)
-    }
+    const correct = selectedAnswer === question.answer
+    triggerHaptic(correct ? 12 : [14, 60, 14])
   }, [showFeedback, selectedAnswer, question.answer])
 
-  const difficultyLabel = t(question.difficulty)
-
-  const tintForIcon = categoryId !== null ? categoryIconBg(categoryId) : "var(--ios-fill-tertiary)"
+  const fillPercent = (Math.max(timeLeft, 0) / TIMER_DURATION) * 100
+  const isLastSeconds = timeLeft <= 3 && timeLeft > 0 && !showFeedback
+  const difficultyPips = DIFFICULTY_PIPS[question.difficulty]
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "var(--ios-bg)" }}>
-      {/* Translucent nav bar */}
-      <div
-        className="ios-nav sticky top-0 z-20"
-        style={{
-          paddingTop: "calc(env(safe-area-inset-top, 0px) + 8px)",
-          paddingBottom: 12,
-          paddingLeft: 16,
-          paddingRight: 16,
-        }}
-      >
-        <div className="flex items-center justify-between gap-3">
-          <button
-            onClick={onQuit}
-            className="ios-press cursor-pointer"
-            style={{
-              background: "transparent",
-              border: 0,
-              color: "var(--ios-blue)",
-              fontSize: "var(--type-body)",
-              fontWeight: 500,
-              padding: "6px 4px",
-            }}
+    <div
+      className="relative flex min-h-screen flex-col"
+      style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
+    >
+      <div style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 6px)" }}>
+        <LiveActivityPill
+          segments={[
+            { key: "cat", label: categoryName },
+            { key: "q", value: questionIndex + 1, label: `/ ${totalQuestions}` },
+            { key: "streak", value: streak, label: t("liveStreak") },
+          ]}
+        />
+      </div>
+
+      {/* Top bar — quiet X quit */}
+      <div className="flex items-center justify-between px-[18px] pt-3.5">
+        <button
+          type="button"
+          aria-label={t("quitConfirm")}
+          onClick={() => setConfirmQuit(true)}
+          className="press flex items-center justify-center"
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            background: "var(--bg-2)",
+            border: "1px solid var(--separator)",
+            color: "var(--ink-100)",
+          }}
+        >
+          <CloseIcon width={14} height={14} />
+        </button>
+        <div className="h-[34px] w-[34px]" aria-hidden />
+      </div>
+
+      {/* Card stack */}
+      <div className="relative flex-1 overflow-hidden px-4 pb-10 pt-[18px]">
+        {/* Peek cards */}
+        <div
+          className="absolute"
+          style={{
+            left: 30,
+            right: 30,
+            top: 580,
+            height: 32,
+            borderRadius: 22,
+            background: "var(--bg-1)",
+            border: "1px solid var(--separator)",
+            transform: "rotate(-1deg)",
+            zIndex: 1,
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            left: 50,
+            right: 50,
+            top: 610,
+            height: 22,
+            borderRadius: 22,
+            background: "var(--bg-1)",
+            border: "1px solid var(--separator)",
+            transform: "rotate(1deg)",
+            opacity: 0.6,
+            zIndex: 1,
+          }}
+        />
+
+        {/* Active card */}
+        <div
+          className="relative"
+          style={{
+            zIndex: 3,
+            borderRadius: 24,
+            overflow: "hidden",
+            background: "var(--bg-2)",
+            border: "1px solid var(--separator)",
+            transform: "rotate(-1deg)",
+          }}
+        >
+          {/* Horizontal timer */}
+          <div
+            className="relative"
+            style={{ height: 4, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}
           >
-            {t("quit")}
-          </button>
-          <div className="flex items-center gap-2 min-w-0">
-            <span
-              className="inline-flex items-center justify-center flex-shrink-0"
-              style={{ width: 26, height: 26, borderRadius: 8, background: tintForIcon, fontSize: 14 }}
-            >
-              {categoryIcon}
-            </span>
-            <span
-              className="truncate"
+            <div
+              className={isLastSeconds ? "timer-pulse" : undefined}
               style={{
-                fontSize: "var(--type-headline)",
+                height: "100%",
+                width: `${fillPercent}%`,
+                background: "var(--ink-100)",
+                transition: "width 1s linear",
+              }}
+            />
+          </div>
+
+          {/* Meta row */}
+          <div className="flex items-center justify-between px-5 pb-1 pt-4">
+            <span
+              style={{
+                fontSize: 11,
                 fontWeight: 600,
-                letterSpacing: "-0.01em",
-                color: "var(--ios-label)",
+                color: "var(--ink-80)",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
               }}
             >
               {categoryName}
             </span>
+            <div
+              className="flex items-center gap-1.5"
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: "var(--ink-60)",
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+              }}
+            >
+              {[1, 2, 3, 4].map((p) => (
+                <span
+                  key={p}
+                  style={{
+                    width: 5,
+                    height: 5,
+                    borderRadius: "50%",
+                    background: p <= difficultyPips ? "var(--ink-100)" : "rgba(255,255,255,0.18)",
+                  }}
+                />
+              ))}
+              <span style={{ marginLeft: 4 }}>{t(question.difficulty)}</span>
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 600,
+                color: "var(--ink-80)",
+                fontVariantNumeric: "tabular-nums",
+                letterSpacing: "-0.005em",
+              }}
+            >
+              <b style={{ color: "var(--ink-100)", fontWeight: 700 }}>{Math.max(timeLeft, 0)}</b>s
+            </div>
           </div>
-          <div
-            className="flex-shrink-0 text-center"
-            style={{
-              fontSize: "var(--type-footnote)",
-              fontWeight: 700,
-              color: "var(--ca-red)",
-              background: "var(--ca-red-soft)",
-              padding: "5px 10px",
-              borderRadius: "var(--radius-pill)",
-              letterSpacing: "-0.01em",
-              minWidth: 56,
-            }}
-          >
-            {score} {t("pts")}
-          </div>
-        </div>
-      </div>
 
-      {/* Progress rail */}
-      <div className="relative" style={{ height: 4, background: "rgba(60, 60, 67, 0.12)" }}>
-        <div
-          className="absolute top-0 bottom-0 left-0"
-          style={{
-            background: "var(--ca-red)",
-            width: `${progressPercent}%`,
-            borderRadius: "0 4px 4px 0",
-            transition: "width 500ms cubic-bezier(0.2, 0.8, 0.2, 1)",
-          }}
-        />
-      </div>
-
-      {/* Body */}
-      <div className="flex-1 flex flex-col px-5 pt-5 pb-8 max-w-xl mx-auto w-full">
-        <div className="flex items-center justify-between mb-3.5">
-          <span
-            style={{
-              fontSize: "var(--type-footnote)",
-              fontWeight: 600,
-              color: "var(--ios-label-secondary)",
-              letterSpacing: "0.01em",
-            }}
-          >
-            {t("question")} {questionIndex + 1} {t("of")} {totalQuestions}
-          </span>
-          <DifficultyPill difficulty={question.difficulty} label={difficultyLabel} points={points} t={t} />
-        </div>
-
-        <div className="flex items-start gap-3.5 mb-5">
+          {/* Question */}
           <h1
-            className="flex-1 m-0"
+            className="m-0"
             style={{
-              fontSize: "var(--type-title-1)",
-              fontWeight: 700,
-              lineHeight: 1.22,
-              letterSpacing: "-0.025em",
-              color: "var(--ios-label)",
-              marginTop: 4,
+              padding: "14px 22px 22px",
+              fontFamily: "var(--font-display)",
+              fontSize: 26,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              lineHeight: 1.18,
+              color: "var(--ink-100)",
             }}
           >
             {question.question[lang]}
           </h1>
-          <Timer duration={20} onTimeUp={onTimeUp} resetKey={timerKey} paused={showFeedback} />
+
+          {/* Options */}
+          <div className="flex flex-col gap-[9px] px-[18px] pb-5">
+            {(["A", "B", "C", "D"] as AnswerKey[]).map((key) => {
+              const isCorrect = key === question.answer
+              const isSelected = key === selectedAnswer
+              const reveal = showFeedback
+              const correctState = reveal && isCorrect
+              const wrongState = reveal && isSelected && !isCorrect
+              const dimmed = reveal && !correctState
+              return (
+                <AnswerOption
+                  key={key}
+                  answerKey={key}
+                  text={question.options[key][lang]}
+                  disabled={reveal}
+                  correctState={correctState}
+                  wrongState={wrongState}
+                  dimmed={dimmed}
+                  onClick={() => {
+                    if (!reveal) {
+                      triggerHaptic(8)
+                      onAnswer(key)
+                    }
+                  }}
+                />
+              )
+            })}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-2.5 mt-1">
-          {(["A", "B", "C", "D"] as AnswerKey[]).map((key) => {
-            const isCorrect = key === question.answer
-            const isSelected = key === selectedAnswer
-            const showCorrect = showFeedback && isCorrect
-            const showWrong = showFeedback && isSelected && !isCorrect
-            const showDimmed = showFeedback && !isCorrect && !isSelected
-
-            return (
-              <AnswerButton
-                key={key}
-                answerKey={key}
-                text={question.options[key][lang]}
-                disabled={showFeedback}
-                pressed={!showFeedback && isSelected}
-                correct={showCorrect}
-                wrong={showWrong}
-                dimmed={showDimmed}
-                shaking={shaking && isSelected && !isCorrect}
-                onClick={() => onAnswer(key)}
-              />
-            )
-          })}
+        {/* Hint */}
+        <div
+          className="pointer-events-none absolute left-0 right-0 text-center"
+          style={{
+            bottom: 24,
+            color: "var(--ink-40)",
+            fontSize: 12,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+            zIndex: 5,
+          }}
+        >
+          {showFeedback ? t("nextIn") : t("tapAnswer")}
         </div>
-
-        {showFeedback && (
-          <FeedbackToast
-            lang={lang}
-            isCorrect={selectedAnswer === question.answer}
-            timedOut={selectedAnswer === null}
-            points={points}
-            correctText={question.options[question.answer][lang]}
-            answerKey={question.answer}
-          />
-        )}
-
-        <div className="flex-1" />
       </div>
+
+      {confirmQuit && (
+        <QuitSheet
+          title={t("quitGameTitle")}
+          body={t("quitGameBody")}
+          confirmLabel={t("quitConfirm")}
+          cancelLabel={t("quitCancel")}
+          onConfirm={onQuit}
+          onCancel={() => setConfirmQuit(false)}
+        />
+      )}
     </div>
   )
 }
 
-function DifficultyPill({
-  difficulty,
-  label,
-  points,
-  t,
-}: {
-  difficulty: Question["difficulty"]
-  label: string
-  points: number
-  t: (key: string) => string
-}) {
-  const tints: Record<Question["difficulty"], { color: string; bg: string; dot: string }> = {
-    easy:   { color: "#1f6e2c", bg: "#e2f6e6", dot: "var(--ios-green)" },
-    medium: { color: "#8a5b00", bg: "#fff4d6", dot: "#d68a00" },
-    hard:   { color: "var(--ca-red-deep)", bg: "var(--ca-red-soft)", dot: "var(--ca-red)" },
-    expert: { color: "#5e2b8a", bg: "#f3e6fc", dot: "var(--ios-purple)" },
-  }
-  const tint = tints[difficulty]
-  return (
-    <span
-      className="inline-flex items-center gap-1.5"
-      style={{
-        fontSize: "var(--type-caption-1)",
-        fontWeight: 700,
-        letterSpacing: "0.04em",
-        textTransform: "uppercase",
-        padding: "5px 10px",
-        borderRadius: "var(--radius-pill)",
-        color: tint.color,
-        background: tint.bg,
-      }}
-    >
-      <span style={{ width: 6, height: 6, borderRadius: "50%", background: tint.dot, display: "inline-block" }} />
-      {label} · {points} {t(points > 1 ? "pts" : "pt")}
-    </span>
-  )
-}
-
-interface AnswerButtonProps {
+interface AnswerOptionProps {
   answerKey: AnswerKey
   text: string
   disabled: boolean
-  pressed: boolean
-  correct: boolean
-  wrong: boolean
+  correctState: boolean
+  wrongState: boolean
   dimmed: boolean
-  shaking: boolean
   onClick: () => void
 }
 
-function AnswerButton({
+function AnswerOption({
   answerKey,
   text,
   disabled,
-  pressed,
-  correct,
-  wrong,
+  correctState,
+  wrongState,
   dimmed,
-  shaking,
   onClick,
-}: AnswerButtonProps) {
-  let bg: string = "var(--ios-surface)"
-  let borderColor: string = "transparent"
-  let keyBg: string = "var(--ios-fill-tertiary)"
-  let keyColor: string = "var(--ios-label)"
-  let extraShadow = "var(--shadow-card)"
-  const opacity = dimmed ? 0.45 : 1
+}: AnswerOptionProps) {
+  const isReveal = correctState || wrongState
+  let bg = "var(--bg-3)"
+  let borderColor: string = "var(--separator)"
+  let keyBg = "rgba(255,255,255,0.06)"
+  let keyColor: string = "var(--ink-80)"
+  let keyBorder: string = "var(--separator)"
 
-  if (pressed) {
-    borderColor = "rgba(213, 43, 30, 0.35)"
-    keyBg = "var(--ca-red)"
-    keyColor = "#fff"
-  }
-  if (correct) {
-    bg = "var(--ios-green-soft)"
-    borderColor = "var(--ios-green)"
-    keyBg = "var(--ios-green)"
-    keyColor = "#fff"
-    extraShadow = "0 0 0 4px rgba(52, 199, 89, 0.10), var(--shadow-card)"
-  }
-  if (wrong) {
-    bg = "var(--ca-red-soft)"
-    borderColor = "var(--ca-red)"
-    keyBg = "var(--ca-red)"
-    keyColor = "#fff"
+  if (correctState) {
+    bg = "rgba(48, 209, 88, 0.10)"
+    borderColor = "var(--success)"
+    keyBg = "var(--success)"
+    keyColor = "#003a14"
+    keyBorder = "transparent"
+  } else if (wrongState) {
+    bg = "rgba(255, 69, 58, 0.08)"
+    borderColor = "rgba(255,69,58,0.55)"
+    keyBg = "var(--danger)"
+    keyColor = "#380a07"
+    keyBorder = "transparent"
   }
 
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`ios-press w-full text-left flex items-center gap-3 ${shaking ? "shake" : ""}`}
+      className="press flex w-full items-center gap-3.5 text-left"
       style={{
+        padding: "15px 18px",
+        borderRadius: 14,
         background: bg,
-        borderRadius: "var(--radius-button)",
-        border: `1.5px solid ${borderColor}`,
-        boxShadow: extraShadow,
-        padding: "14px 14px 14px 12px",
+        border: `1px solid ${borderColor}`,
+        color: "var(--ink-100)",
+        fontSize: 16,
+        fontWeight: 500,
+        letterSpacing: "-0.01em",
+        opacity: dimmed && !isReveal ? 0.4 : dimmed ? 0.4 : 1,
         cursor: disabled ? "default" : "pointer",
-        opacity,
-        color: "inherit",
       }}
     >
       <span
-        className="inline-flex items-center justify-center flex-shrink-0"
+        className="flex flex-shrink-0 items-center justify-center"
         style={{
-          width: 36,
-          height: 36,
-          borderRadius: 12,
+          width: 26,
+          height: 26,
+          borderRadius: 7,
           background: keyBg,
           color: keyColor,
-          fontSize: 15,
-          fontWeight: 700,
-          letterSpacing: "-0.01em",
-          transition: "background 180ms ease, color 180ms ease",
+          border: `1px solid ${keyBorder}`,
+          fontSize: 12,
+          fontWeight: 600,
+          fontVariantNumeric: "tabular-nums",
         }}
       >
-        {answerKey}
+        {correctState ? (
+          <CheckIcon width={14} height={14} />
+        ) : wrongState ? (
+          <CrossIcon width={14} height={14} />
+        ) : (
+          answerKey
+        )}
       </span>
-      <span
-        className="flex-1"
-        style={{ fontSize: "var(--type-body)", fontWeight: 500, lineHeight: 1.3, color: "var(--ios-label)" }}
-      >
-        {text}
-      </span>
-      {correct && (
-        <span
-          className="spring-in inline-flex items-center justify-center flex-shrink-0"
-          style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--ios-green)", color: "#fff" }}
-        >
-          <CheckIcon />
-        </span>
-      )}
-      {wrong && (
-        <span
-          className="spring-in inline-flex items-center justify-center flex-shrink-0"
-          style={{ width: 24, height: 24, borderRadius: "50%", background: "var(--ca-red)", color: "#fff" }}
-        >
-          <CrossIcon />
-        </span>
-      )}
+      <span className="flex-1">{text}</span>
     </button>
   )
 }
 
-interface FeedbackToastProps {
-  lang: Lang
-  isCorrect: boolean
-  timedOut: boolean
-  points: number
-  correctText: string
-  answerKey: AnswerKey
+interface QuitSheetProps {
+  title: string
+  body: string
+  confirmLabel: string
+  cancelLabel: string
+  onConfirm: () => void
+  onCancel: () => void
 }
 
-function FeedbackToast({ lang, isCorrect, timedOut, points, correctText, answerKey }: FeedbackToastProps) {
-  const t = (key: string) => ui[key]?.[lang] || key
-  if (isCorrect) {
-    return (
-      <div
-        className="mt-4 flex items-center gap-2.5"
-        style={{
-          padding: "12px 14px",
-          borderRadius: 14,
-          background: "var(--ios-green-soft)",
-          color: "#1f6e2c",
-          fontSize: "var(--type-subhead)",
-          fontWeight: 600,
-          boxShadow: "0 1px 2px rgba(31, 110, 44, 0.08)",
-        }}
-      >
-        <span
-          className="inline-flex items-center justify-center"
-          style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--ios-green)", color: "#fff", flexShrink: 0 }}
-        >
-          <CheckIcon />
-        </span>
-        {t("correct")} +{points} {t(points > 1 ? "pts" : "pt")}
-      </div>
-    )
-  }
+function QuitSheet({ title, body, confirmLabel, cancelLabel, onConfirm, onCancel }: QuitSheetProps) {
   return (
     <div
-      className="mt-4 flex items-center gap-2.5"
+      className="fade-in fixed inset-0 z-50 flex items-end justify-center"
       style={{
-        padding: "12px 14px",
-        borderRadius: 14,
-        background: "var(--ca-red-soft)",
-        color: "var(--ca-red-deep)",
-        fontSize: "var(--type-subhead)",
-        fontWeight: 600,
+        background: "rgba(0,0,0,0.55)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
       }}
+      onClick={onCancel}
     >
-      <span
-        className="inline-flex items-center justify-center flex-shrink-0"
-        style={{ width: 22, height: 22, borderRadius: "50%", background: "var(--ca-red)", color: "#fff" }}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md p-3"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)" }}
       >
-        <CrossIcon />
-      </span>
-      <span>
-        {timedOut ? t("timesUp") : t("wrong")} {answerKey}: {correctText}
-      </span>
+        <div
+          style={{
+            background: "var(--bg-2)",
+            border: "1px solid var(--separator)",
+            borderRadius: 14,
+            overflow: "hidden",
+          }}
+        >
+          <div className="px-5 pb-3 pt-4 text-center">
+            <p
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 15,
+                fontWeight: 600,
+                color: "var(--ink-100)",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              {title}
+            </p>
+            <p
+              className="m-0 mt-1"
+              style={{ fontSize: 13, color: "var(--ink-60)", letterSpacing: "-0.005em" }}
+            >
+              {body}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="press w-full"
+            style={{
+              padding: "14px",
+              borderTop: "1px solid var(--separator)",
+              background: "transparent",
+              color: "var(--danger)",
+              fontSize: 16,
+              fontWeight: 600,
+              letterSpacing: "-0.005em",
+            }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="press mt-2 w-full"
+          style={{
+            padding: "14px",
+            borderRadius: 14,
+            background: "var(--bg-2)",
+            border: "1px solid var(--separator)",
+            color: "var(--ink-100)",
+            fontSize: 16,
+            fontWeight: 600,
+            letterSpacing: "-0.005em",
+          }}
+        >
+          {cancelLabel}
+        </button>
+      </div>
     </div>
   )
 }
+

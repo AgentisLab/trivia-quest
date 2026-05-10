@@ -9,16 +9,23 @@ interface Props {
 }
 
 export default function LangToggle({ lang, onChange, size = "md" }: Props) {
-  const padding = size === "sm" ? "p-[2px]" : "p-[3px]"
-  const itemPadding = size === "sm" ? "px-2.5 py-1" : "px-3 py-[5px]"
+  const itemPadding = size === "sm" ? "5px 12px" : "6px 14px"
   const fontSize = size === "sm" ? 12 : 13
 
   return (
     <div
       role="tablist"
       aria-label="Language"
-      className={`inline-flex rounded-full ${padding} select-none`}
-      style={{ background: "var(--ios-fill-tertiary)", fontSize, fontWeight: 600 }}
+      className="inline-flex select-none"
+      style={{
+        background: "var(--bg-2)",
+        border: "1px solid var(--separator)",
+        borderRadius: 999,
+        padding: 3,
+        gap: 2,
+        fontSize,
+        fontWeight: 600,
+      }}
     >
       {(["en", "fr"] as const).map((value) => {
         const active = lang === value
@@ -28,11 +35,14 @@ export default function LangToggle({ lang, onChange, size = "md" }: Props) {
             role="tab"
             aria-selected={active}
             onClick={() => onChange(value)}
-            className={`${itemPadding} rounded-full transition-all duration-200 cursor-pointer`}
+            className="press cursor-pointer"
             style={{
-              background: active ? "var(--ios-surface)" : "transparent",
-              color: active ? "var(--ios-label)" : "var(--ios-label-secondary)",
-              boxShadow: active ? "0 1px 2px rgba(15, 15, 25, 0.08)" : "none",
+              padding: itemPadding,
+              borderRadius: 999,
+              border: 0,
+              background: active ? "var(--ink-100)" : "transparent",
+              color: active ? "#000" : "var(--ink-60)",
+              letterSpacing: "-0.005em",
             }}
           >
             {value.toUpperCase()}

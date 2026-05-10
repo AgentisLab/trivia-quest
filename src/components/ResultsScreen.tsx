@@ -1,7 +1,10 @@
 "use client"
 
+import { useEffect, useMemo, useState } from "react"
 import { Lang, Question } from "@/data/types"
 import { ui } from "@/data/ui-strings"
+import { TriviaStats, emptyStats, loadStats } from "@/lib/stats"
+import { CloseIcon, PlaySolidIcon } from "./icons"
 
 interface AnswerRecord {
   question: Question
@@ -11,175 +14,380 @@ interface AnswerRecord {
 
 interface Props {
   lang: Lang
-  score: number
-  maxScore: number
   answers: AnswerRecord[]
-  categoryIcon: string
   categoryName: string
-  isRandomMix: boolean
+  difficultyLabel?: string
+  totalElapsedMs: number
+  bestStreak: number
   onPlayAgain: () => void
   onChooseAnother: () => void
 }
 
-const POINTS: Record<Question["difficulty"], number> = {
-  easy: 1,
-  medium: 2,
-  hard: 3,
-  expert: 4,
-}
-
-const DIFFICULTY_TINTS: Record<Question["difficulty"], { color: string; bg: string }> = {
-  easy:   { color: "#1f6e2c", bg: "#e2f6e6" },
-  medium: { color: "#8a5b00", bg: "#fff4d6" },
-  hard:   { color: "var(--ca-red-deep)", bg: "var(--ca-red-soft)" },
-  expert: { color: "#5e2b8a", bg: "#f3e6fc" },
-}
+const ORDER: Question["difficulty"][] = ["easy", "medium", "hard", "expert"]
 
 export default function ResultsScreen({
   lang,
-  score,
-  maxScore,
   answers,
-  categoryIcon,
   categoryName,
-  isRandomMix,
+  difficultyLabel,
+  totalElapsedMs,
+  bestStreak,
   onPlayAgain,
   onChooseAnother,
 }: Props) {
   const t = (key: string) => ui[key]?.[lang] || key
-  const correctCount = answers.filter((a) => a.correct).length
-  const ratio = maxScore > 0 ? score / maxScore : 0
-  const trophy = ratio >= 0.8 ? "🏆" : ratio >= 0.5 ? "🎉" : "💪"
+  const [stats, setStats] = useState<TriviaStats>(emptyStats())
 
-  const breakdown = (["easy", "medium", "hard", "expert"] as const).map((d) => ({
-    difficulty: d,
-    label: t(`${d}Label`),
-    items: answers.filter((a) => a.question.difficulty === d),
-  }))
+  useEffect(() => {
+    setStats(loadStats())
+  }, [])
+
+  const correct = answers.filter((a) => a.correct).length
+  const total = answers.length
+  const accuracyPct = total > 0 ? Math.round((correct / total) * 100) : 0
+
+  const breakdown = useMemo(
+    () =>
+      ORDER.map((d) => {
+        const items = answers.filter((a) => a.question.difficulty === d)
+        return {
+          difficulty: d,
+          got: items.filter((a) => a.correct).length,
+          total: items.length,
+        }
+      }).filter((row) => row.total > 0),
+    [answers]
+  )
+
+  const dateLine = useMemo(() => formatDate(new Date(), lang), [lang])
+  const timeText = formatDuration(totalElapsedMs, lang)
+  const avgText = formatAverage(totalElapsedMs, total, lang)
+
+  const headerKicker = difficultyLabel ? `${categoryName} · ${difficultyLabel}` : categoryName
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-5 py-10" style={{ background: "var(--ios-bg)" }}>
-      <div className="w-full max-w-md text-center">
-        <div className="text-5xl mb-3">{trophy}</div>
-        <h1
+    <div
+      className="relative flex min-h-screen flex-col"
+      style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
+    >
+      <div
+        className="flex items-center justify-between px-[18px]"
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 14px)" }}
+      >
+        <button
+          type="button"
+          onClick={onChooseAnother}
+          aria-label={t("chooseAnother")}
+          className="press flex items-center justify-center"
           style={{
-            fontSize: "var(--type-title-1)",
-            fontWeight: 800,
-            letterSpacing: "-0.025em",
-            color: "var(--ios-label)",
-            margin: 0,
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            background: "var(--bg-2)",
+            border: "1px solid var(--separator)",
+            color: "var(--ink-100)",
           }}
         >
-          {t("gameOver")}
-        </h1>
-        <p
-          className="mt-1.5"
-          style={{ fontSize: "var(--type-subhead)", color: "var(--ios-label-secondary)", fontWeight: 500 }}
-        >
-          <span className="mr-1">{categoryIcon}</span>
-          {categoryName}
-        </p>
-
+          <CloseIcon width={14} height={14} />
+        </button>
         <div
-          className="my-5 inline-flex items-baseline gap-2"
-          style={{ fontSize: 44, fontWeight: 800, color: "var(--ca-red)", letterSpacing: "-0.03em", fontVariantNumeric: "tabular-nums" }}
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 16,
+            fontWeight: 600,
+            color: "var(--ink-100)",
+            letterSpacing: "-0.01em",
+          }}
         >
-          {score}
-          <span style={{ fontSize: 22, color: "var(--ios-label-secondary)", fontWeight: 600 }}>/ {maxScore}</span>
+          {t("summary")}
         </div>
-        <p
-          className="mb-7"
-          style={{ fontSize: "var(--type-subhead)", color: "var(--ios-label-secondary)" }}
-        >
-          {correctCount} / {answers.length} {t("questionsCorrect")}
-        </p>
+        <div className="h-[34px] w-[34px]" aria-hidden />
+      </div>
 
-        {/* Breakdown card */}
-        <div
-          className="text-left p-5 mb-7"
-          style={{
-            background: "var(--ios-surface)",
-            borderRadius: "var(--radius-card)",
-            boxShadow: "var(--shadow-card)",
-          }}
-        >
-          <h3
-            className="text-center mb-4"
+      <div className="flex flex-1 flex-col px-[26px] pb-[170px] pt-9">
+        <div className="mb-7 flex flex-col gap-2">
+          <p
+            className="m-0"
             style={{
-              fontSize: "var(--type-headline)",
-              fontWeight: 700,
-              color: "var(--ios-label)",
-              letterSpacing: "-0.01em",
+              fontSize: 12,
+              fontWeight: 500,
+              letterSpacing: "-0.005em",
+              color: "var(--ink-60)",
             }}
           >
-            {t("scoreBreakdown")}
-          </h3>
-          <div className="flex flex-col gap-3">
-            {breakdown.map(({ difficulty, label, items }) => {
-              if (items.length === 0) return null
-              const tint = DIFFICULTY_TINTS[difficulty]
-              const got = items.filter((a) => a.correct).length
-              return (
-                <div key={difficulty} className="flex items-center justify-between gap-3">
-                  <span
-                    className="font-semibold"
-                    style={{
-                      fontSize: "var(--type-footnote)",
-                      padding: "4px 10px",
-                      borderRadius: "var(--radius-pill)",
-                      color: tint.color,
-                      background: tint.bg,
-                    }}
-                  >
-                    {label}
-                  </span>
-                  <span
-                    style={{ fontSize: "var(--type-subhead)", color: "var(--ios-label-secondary)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}
-                  >
-                    {got} / {items.length} · {got * POINTS[difficulty]} {t("pts")}
-                  </span>
-                </div>
-              )
-            })}
+            {headerKicker}
+          </p>
+          <h1
+            className="m-0"
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 28,
+              fontWeight: 700,
+              letterSpacing: "-0.025em",
+              lineHeight: 1.1,
+              color: "var(--ink-100)",
+            }}
+          >
+            {dateLine}
+          </h1>
+        </div>
+
+        <div
+          className="mb-6 flex items-end gap-3.5 pb-6"
+          style={{ borderBottom: "1px solid var(--separator)" }}
+        >
+          <span
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 80,
+              fontWeight: 700,
+              letterSpacing: "-0.04em",
+              lineHeight: 0.95,
+              color: "var(--ink-100)",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {correct}
+          </span>
+          <span
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: 24,
+              fontWeight: 600,
+              letterSpacing: "-0.02em",
+              color: "var(--ink-60)",
+              marginBottom: 8,
+            }}
+          >
+            / {total}
+          </span>
+          <div className="ml-auto flex flex-col items-end" style={{ marginBottom: 6 }}>
+            <p
+              className="m-0"
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 22,
+                fontWeight: 600,
+                letterSpacing: "-0.02em",
+                color: "var(--success)",
+                fontVariantNumeric: "tabular-nums",
+                lineHeight: 1,
+              }}
+            >
+              {accuracyPct}%
+            </p>
+            <p
+              className="m-0"
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: "var(--ink-60)",
+                letterSpacing: "-0.005em",
+                marginTop: 2,
+              }}
+            >
+              {t("accuracy")}
+            </p>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-col gap-2.5">
-          <button
-            onClick={onPlayAgain}
-            className="ios-press w-full cursor-pointer"
+        <StatRow label={t("bestStreak")} value={`${bestStreak} ${t("inARow")}`} />
+        <StatRow label={t("totalTime")} value={timeText} />
+        <StatRow label={t("avgPerQuestion")} value={avgText} />
+        <StatRow
+          label={t("dayStreakLabel")}
+          value={`${stats.currentStreak} ${t("daysUnit")}`}
+          last
+        />
+
+        <div className="mt-2">
+          <p
+            className="m-0 mb-3"
             style={{
-              padding: "14px 18px",
-              background: "var(--ca-red)",
-              color: "#fff",
+              fontSize: 12,
               fontWeight: 600,
-              fontSize: "var(--type-body)",
-              borderRadius: "var(--radius-button)",
-              border: 0,
-              letterSpacing: "-0.01em",
+              color: "var(--ink-60)",
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
             }}
           >
-            {t("playAgain")} {isRandomMix ? "🎲" : ""}
-          </button>
-          <button
-            onClick={onChooseAnother}
-            className="ios-press w-full cursor-pointer"
-            style={{
-              padding: "14px 18px",
-              background: "var(--ios-surface)",
-              color: "var(--ios-label)",
-              fontWeight: 600,
-              fontSize: "var(--type-body)",
-              borderRadius: "var(--radius-button)",
-              border: "0.5px solid var(--ios-separator)",
-              letterSpacing: "-0.01em",
-            }}
-          >
-            {t("chooseAnother")}
-          </button>
+            {t("byDifficulty")}
+          </p>
+          {breakdown.map((row) => (
+            <BarRow
+              key={row.difficulty}
+              label={t(row.difficulty)}
+              got={row.got}
+              total={row.total}
+            />
+          ))}
         </div>
+      </div>
+
+      <div
+        className="absolute left-[18px] right-[18px] z-10 flex flex-col gap-2"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 28px)" }}
+      >
+        <button
+          type="button"
+          onClick={onPlayAgain}
+          className="press flex items-center justify-center gap-2"
+          style={{
+            height: 52,
+            borderRadius: 14,
+            background: "var(--accent)",
+            color: "#fff",
+            fontFamily: "var(--font-display)",
+            fontSize: 16,
+            fontWeight: 600,
+            letterSpacing: "-0.01em",
+            border: 0,
+          }}
+        >
+          <PlaySolidIcon width={16} height={16} />
+          {t("playAgain")}
+        </button>
+        <button
+          type="button"
+          onClick={onChooseAnother}
+          className="press"
+          style={{
+            height: 46,
+            borderRadius: 12,
+            background: "transparent",
+            color: "var(--ink-60)",
+            fontSize: 14,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+            border: 0,
+          }}
+        >
+          {t("chooseAnother")}
+        </button>
       </div>
     </div>
   )
+}
+
+function StatRow({ label, value, last = false }: { label: string; value: string; last?: boolean }) {
+  return (
+    <div
+      className="flex items-center justify-between"
+      style={{
+        padding: "14px 0",
+        borderBottom: last ? "none" : "1px solid var(--separator)",
+      }}
+    >
+      <span
+        style={{
+          fontSize: 14,
+          fontWeight: 500,
+          color: "var(--ink-80)",
+          letterSpacing: "-0.005em",
+        }}
+      >
+        {label}
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 16,
+          fontWeight: 600,
+          color: "var(--ink-100)",
+          letterSpacing: "-0.012em",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {value}
+      </span>
+    </div>
+  )
+}
+
+function BarRow({ label, got, total }: { label: string; got: number; total: number }) {
+  const pct = total > 0 ? (got / total) * 100 : 0
+  return (
+    <div className="flex items-center gap-3" style={{ padding: "10px 0" }}>
+      <span
+        style={{
+          fontSize: 13,
+          fontWeight: 500,
+          color: "var(--ink-80)",
+          letterSpacing: "-0.005em",
+          width: 64,
+        }}
+      >
+        {label}
+      </span>
+      <span
+        className="flex-1"
+        style={{
+          height: 4,
+          borderRadius: 2,
+          background: "rgba(255,255,255,0.08)",
+          overflow: "hidden",
+        }}
+      >
+        <span
+          style={{
+            display: "block",
+            height: "100%",
+            width: `${pct}%`,
+            background: "var(--ink-100)",
+            borderRadius: 2,
+          }}
+        />
+      </span>
+      <span
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 13,
+          fontWeight: 600,
+          color: "var(--ink-80)",
+          letterSpacing: "-0.005em",
+          fontVariantNumeric: "tabular-nums",
+          width: 40,
+          textAlign: "right",
+        }}
+      >
+        {got} / {total}
+      </span>
+    </div>
+  )
+}
+
+function formatDate(date: Date, lang: Lang): string {
+  const enFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" }).format(date)
+  const time = new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: lang === "en",
+  }).format(date)
+  if (lang === "fr") {
+    const frFmt = new Intl.DateTimeFormat("fr-CA", { month: "long", day: "numeric" })
+      .format(date)
+      .replace(/^0+/, "")
+    return `${frFmt} · ${time.replace(":", " h ")}`
+  }
+  return `${enFmt} · ${time}`
+}
+
+function formatDuration(ms: number, lang: Lang): string {
+  const totalSec = Math.max(0, Math.round(ms / 1000))
+  const min = Math.floor(totalSec / 60)
+  const sec = totalSec % 60
+  if (lang === "fr") {
+    if (min === 0) return `${sec} s`
+    return `${min} min ${String(sec).padStart(2, "0")} s`
+  }
+  if (min === 0) return `${sec}s`
+  return `${min} min ${String(sec).padStart(2, "0")}s`
+}
+
+function formatAverage(totalMs: number, count: number, lang: Lang): string {
+  if (count <= 0) return lang === "fr" ? "0,0 s" : "0.0s"
+  const avg = totalMs / count / 1000
+  const rounded = Math.round(avg * 10) / 10
+  if (lang === "fr") return `${rounded.toFixed(1).replace(".", ",")} s`
+  return `${rounded.toFixed(1)}s`
 }

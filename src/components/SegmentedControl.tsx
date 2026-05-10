@@ -51,7 +51,7 @@ export default function SegmentedControl<T extends string | number>({
               borderRadius: 999,
               border: 0,
               background: active ? "var(--ink-100)" : "transparent",
-              color: active ? "#000" : "var(--ink-60)",
+              color: active ? "var(--segmented-active-fg)" : "var(--ink-60)",
               fontSize,
               fontWeight: 600,
               letterSpacing: "-0.005em",

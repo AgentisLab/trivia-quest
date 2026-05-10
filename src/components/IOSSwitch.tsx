@@ -18,7 +18,7 @@ export default function IOSSwitch({ checked, onChange, ariaLabel }: Props) {
         width: 51,
         height: 31,
         borderRadius: 999,
-        background: checked ? "var(--accent)" : "var(--bg-3)",
+        background: checked ? "var(--accent)" : "var(--switch-track-off)",
         border: "1px solid var(--separator)",
         padding: 0,
         transition: "background 200ms ease",
@@ -32,8 +32,8 @@ export default function IOSSwitch({ checked, onChange, ariaLabel }: Props) {
           width: 25,
           height: 25,
           borderRadius: "50%",
-          background: "#fff",
-          boxShadow: "0 2px 6px rgba(0,0,0,0.32)",
+          background: "var(--switch-knob)",
+          boxShadow: "var(--switch-knob-shadow)",
           transition: "left 200ms cubic-bezier(0.2, 0.8, 0.2, 1)",
         }}
       />

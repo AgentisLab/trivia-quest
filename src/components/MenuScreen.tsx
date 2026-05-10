@@ -136,7 +136,7 @@ export default function MenuScreen({
           <button
             type="button"
             onClick={onRandomMix}
-            className="press w-full text-left"
+            className="press story-card hover-tint w-full text-left"
             style={{
               padding: "26px 0 28px",
               background: "transparent",
@@ -226,7 +226,7 @@ export default function MenuScreen({
                 <button
                   type="button"
                   onClick={() => onSelectCategory(cat)}
-                  className="press w-full text-left"
+                  className="press story-card hover-tint w-full text-left"
                   style={{
                     padding: "20px 0 22px",
                     background: "transparent",
@@ -310,7 +310,7 @@ function Chevron({ muted = false }: { muted?: boolean }) {
   return (
     <span
       aria-hidden
-      className="flex flex-shrink-0 items-center justify-center"
+      className="chevron-arrow flex flex-shrink-0 items-center justify-center"
       style={{
         marginTop: 6,
         color: muted ? "var(--ink-40)" : "var(--ink-60)",
@@ -318,6 +318,7 @@ function Chevron({ muted = false }: { muted?: boolean }) {
         fontSize: 22,
         fontWeight: 300,
         lineHeight: 1,
+        transition: "color 140ms ease",
       }}
     >
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">

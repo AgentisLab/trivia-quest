@@ -114,4 +114,11 @@ export const ui: Record<string, Record<Lang, string>> = {
   settingsData: { en: "Data", fr: "Données" },
   settingsResetStats: { en: "Reset stats", fr: "Réinitialiser les statistiques" },
   statsResetConfirm: { en: "Reset all stats? This cannot be undone.", fr: "Réinitialiser toutes les statistiques? Cette action est irréversible." },
+
+  // Appearance
+  settingsAppearance: { en: "Appearance", fr: "Apparence" },
+  settingsTheme: { en: "Theme", fr: "Thème" },
+  themeSystem: { en: "System", fr: "Système" },
+  themeLight: { en: "Light", fr: "Clair" },
+  themeDark: { en: "Dark", fr: "Sombre" },
 }

@@ -31,7 +31,7 @@ export default function TabBar() {
     <nav
       className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-around"
       style={{
-        background: "rgba(0, 0, 0, 0.7)",
+        background: "var(--tabbar-bg)",
         backdropFilter: "blur(30px) saturate(140%)",
         WebkitBackdropFilter: "blur(30px) saturate(140%)",
         borderTop: "1px solid var(--separator)",

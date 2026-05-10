@@ -9,10 +9,13 @@ import {
   loadBoolPref,
   saveBoolPref,
   PREF_KEYS,
+  ThemePreference,
 } from "@/lib/preferences"
+import { useTheme } from "@/lib/useTheme"
 import { clearStats } from "@/lib/stats"
 import IOSSwitch from "@/components/IOSSwitch"
 import LangToggle from "@/components/LangToggle"
+import SegmentedControl from "@/components/SegmentedControl"
 import TabBar from "@/components/TabBar"
 
 export default function SettingsPage() {
@@ -20,6 +23,7 @@ export default function SettingsPage() {
   const [lang, setLang] = useState<Lang>("en")
   const [sound, setSound] = useState(false)
   const [haptics, setHaptics] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   useEffect(() => {
     setLang(loadLang())
@@ -101,6 +105,22 @@ export default function SettingsPage() {
               </span>
               <LangToggle lang={lang} onChange={handleLang} size="sm" />
             </Row>
+          </Section>
+
+          <Section kicker={t("settingsAppearance")}>
+            <div style={{ padding: "16px 0" }}>
+              <SegmentedControl<ThemePreference>
+                ariaLabel={t("settingsTheme")}
+                value={theme}
+                onChange={setTheme}
+                size="sm"
+                options={[
+                  { value: "system", label: t("themeSystem") },
+                  { value: "light", label: t("themeLight") },
+                  { value: "dark", label: t("themeDark") },
+                ]}
+              />
+            </div>
           </Section>
 
           <Section kicker={t("settingsGameplay")}>

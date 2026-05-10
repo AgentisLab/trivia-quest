@@ -1,11 +1,22 @@
 import { Lang } from "@/data/types"
 
 export type GameLength = 5 | 10 | 20
+export type ThemePreference = "system" | "light" | "dark"
+export type ResolvedTheme = "light" | "dark"
 
 const LANG_KEY = "trivia-lang"
 const LENGTH_KEY = "trivia-game-length"
 const SOUND_KEY = "trivia-sound"
 const HAPTICS_KEY = "trivia-haptics"
+const THEME_KEY = "trivia-theme"
+
+export const THEME_OPTIONS: ThemePreference[] = ["system", "light", "dark"]
+
+/* Color used by <meta name="theme-color"> per resolved theme. Matches --bg-0. */
+export const THEME_COLOR: Record<ResolvedTheme, string> = {
+  dark: "#000000",
+  light: "#ffffff",
+}
 
 export const DEFAULT_GAME_LENGTH: GameLength = 10
 export const GAME_LENGTHS: GameLength[] = [5, 10, 20]
@@ -46,7 +57,36 @@ export function saveBoolPref(key: typeof SOUND_KEY | typeof HAPTICS_KEY, value: 
 export const PREF_KEYS = {
   sound: SOUND_KEY,
   haptics: HAPTICS_KEY,
+  theme: THEME_KEY,
 } as const
+
+export function loadTheme(): ThemePreference {
+  if (typeof window === "undefined") return "system"
+  const saved = localStorage.getItem(THEME_KEY)
+  return saved === "light" || saved === "dark" || saved === "system" ? saved : "system"
+}
+
+export function saveTheme(theme: ThemePreference): void {
+  if (typeof window === "undefined") return
+  localStorage.setItem(THEME_KEY, theme)
+}
+
+export function systemPrefersDark(): boolean {
+  if (typeof window === "undefined" || !window.matchMedia) return true
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+}
+
+export function resolveTheme(pref: ThemePreference): ResolvedTheme {
+  if (pref === "system") return systemPrefersDark() ? "dark" : "light"
+  return pref
+}
+
+export function applyTheme(resolved: ResolvedTheme): void {
+  if (typeof document === "undefined") return
+  document.documentElement.dataset.theme = resolved
+  const meta = document.querySelector('meta[name="theme-color"]')
+  if (meta) meta.setAttribute("content", THEME_COLOR[resolved])
+}
 
 interface RandomMixSplit {
   easy: number

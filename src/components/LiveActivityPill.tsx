@@ -20,7 +20,7 @@ export default function LiveActivityPill({ segments }: Props) {
         marginTop: 6,
         padding: "7px 14px",
         borderRadius: 999,
-        background: "rgba(20, 20, 20, 0.85)",
+        background: "var(--pill-bg)",
         backdropFilter: "blur(20px) saturate(140%)",
         WebkitBackdropFilter: "blur(20px) saturate(140%)",
         border: "1px solid var(--separator)",
@@ -35,7 +35,7 @@ export default function LiveActivityPill({ segments }: Props) {
           {i > 0 && (
             <span
               aria-hidden
-              style={{ width: 1, height: 11, background: "rgba(255,255,255,0.18)" }}
+              style={{ width: 1, height: 11, background: "var(--pill-divider)" }}
             />
           )}
           <span className="flex items-center gap-1.5">

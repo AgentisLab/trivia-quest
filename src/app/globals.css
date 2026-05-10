@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   Theme tokens
+   - :root holds the dark palette as a no-FOUC fallback (matches v5).
+   - [data-theme="dark"] re-states it for explicit selection.
+   - [data-theme="light"] overrides for the light palette.
+   ------------------------------------------------------------------ */
+
 :root {
   color-scheme: dark;
 
@@ -15,12 +22,90 @@
   --ink-40: rgba(255, 255, 255, 0.38);
 
   --accent: #ef3340;
+  --secondary: #ef3340;          /* falls back to accent in dark */
   --success: rgba(48, 209, 88, 0.92);
   --danger: rgba(255, 69, 58, 0.92);
+
+  /* Mode-aware surfaces (dark defaults) */
+  --hover-tint: rgba(255, 255, 255, 0.04);
+  --timer-track: rgba(255, 255, 255, 0.08);
+  --pill-bg: rgba(20, 20, 20, 0.85);
+  --pill-divider: rgba(255, 255, 255, 0.18);
+  --tabbar-bg: rgba(0, 0, 0, 0.7);
+  --switch-knob: #ffffff;
+  --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.32);
+  --switch-track-off: #1f1f1f;
+  --on-accent: #ffffff;
+  --segmented-active-fg: #000000;
+  --sheet-scrim: rgba(0, 0, 0, 0.55);
 
   --font-system: -apple-system, BlinkMacSystemFont, "SF Pro", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-system);
   --font-text: var(--font-system);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg-0: #000000;
+  --bg-1: #0a0a0a;
+  --bg-2: #161616;
+  --bg-3: #1f1f1f;
+  --separator: rgba(255, 255, 255, 0.08);
+
+  --ink-100: #ffffff;
+  --ink-80: rgba(255, 255, 255, 0.78);
+  --ink-60: rgba(255, 255, 255, 0.55);
+  --ink-40: rgba(255, 255, 255, 0.38);
+
+  --accent: #ef3340;
+  --secondary: #ef3340;
+  --success: rgba(48, 209, 88, 0.92);
+  --danger: rgba(255, 69, 58, 0.92);
+
+  --hover-tint: rgba(255, 255, 255, 0.04);
+  --timer-track: rgba(255, 255, 255, 0.08);
+  --pill-bg: rgba(20, 20, 20, 0.85);
+  --pill-divider: rgba(255, 255, 255, 0.18);
+  --tabbar-bg: rgba(0, 0, 0, 0.7);
+  --switch-knob: #ffffff;
+  --switch-knob-shadow: 0 2px 6px rgba(0, 0, 0, 0.32);
+  --switch-track-off: #1f1f1f;
+  --on-accent: #ffffff;
+  --segmented-active-fg: #000000;
+  --sheet-scrim: rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-0: #ffffff;
+  --bg-1: #ffffff;
+  --bg-2: #fafaf7;
+  --bg-3: #f2f2ef;
+  --separator: rgba(0, 0, 0, 0.08);
+
+  --ink-100: #1c1c1e;
+  --ink-80: rgba(28, 28, 30, 0.78);
+  --ink-60: rgba(28, 28, 30, 0.55);
+  --ink-40: rgba(28, 28, 30, 0.38);
+
+  --accent: #ef3340;
+  --secondary: #0a84ff;
+  --success: #30d158;
+  --danger: #ff3b30;
+
+  --hover-tint: rgba(10, 132, 255, 0.04);
+  --timer-track: rgba(0, 0, 0, 0.08);
+  --pill-bg: rgba(255, 255, 255, 0.85);
+  --pill-divider: rgba(0, 0, 0, 0.12);
+  --tabbar-bg: rgba(255, 255, 255, 0.78);
+  --switch-knob: #ffffff;
+  --switch-knob-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+  --switch-track-off: #e5e5ea;       /* iOS standard light-mode off track */
+  --on-accent: #ffffff;
+  --segmented-active-fg: #ffffff;
+  --sheet-scrim: rgba(0, 0, 0, 0.32);
 }
 
 html, body {
@@ -47,6 +132,32 @@ button {
 .press:active {
   transform: scale(0.985);
   opacity: 0.92;
+}
+
+/* Subtle hover tint, used by interactive list rows / story cards.
+   Resolves per-theme via --hover-tint. Dark = white 4%; light = blue 4%. */
+@media (hover: hover) {
+  .hover-tint:hover {
+    background: var(--hover-tint);
+  }
+}
+
+/* Light-mode-only: chevron picks up secondary blue on hover.
+   Inline styles set the span's color, so we override stroke directly on the
+   SVG path inside the chevron — that wins because the SVG markup uses
+   stroke="currentColor". */
+@media (hover: hover) {
+  [data-theme="light"] .story-card:hover .chevron-arrow svg {
+    stroke: var(--secondary);
+    transition: stroke 140ms ease;
+  }
+}
+
+/* Focus rings — subtle, theme-aware. */
+:where(button, a, [role="tab"], [role="switch"]):focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
+  border-radius: inherit;
 }
 
 /* Single-beat pulse for the timer's last 3s */

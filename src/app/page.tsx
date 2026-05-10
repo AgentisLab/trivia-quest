@@ -16,6 +16,7 @@ import MenuScreen from "@/components/MenuScreen"
 import GameScreen from "@/components/GameScreen"
 import ResultsScreen from "@/components/ResultsScreen"
 import TabBar from "@/components/TabBar"
+import ThemeMount from "@/components/ThemeMount"
 
 type GameState = "menu" | "playing" | "results"
 type AnswerKey = "A" | "B" | "C" | "D"
@@ -187,6 +188,7 @@ export default function Home() {
   if (gameState === "menu") {
     return (
       <>
+        <ThemeMount />
         <MenuScreen
           lang={lang}
           gameLength={gameLength}
@@ -206,20 +208,23 @@ export default function Home() {
       ? t("randomMix")
       : selectedCategory?.name[lang] ?? ""
     return (
-      <GameScreen
-        lang={lang}
-        question={currentQuestion}
-        questionIndex={currentIndex}
-        totalQuestions={questions.length}
-        streak={streak}
-        categoryName={categoryName}
-        selectedAnswer={selectedAnswer}
-        showFeedback={showFeedback}
-        timerKey={timerKey}
-        onAnswer={handleAnswerKey}
-        onTimeUp={handleTimeUp}
-        onQuit={resetToMenu}
-      />
+      <>
+        <ThemeMount />
+        <GameScreen
+          lang={lang}
+          question={currentQuestion}
+          questionIndex={currentIndex}
+          totalQuestions={questions.length}
+          streak={streak}
+          categoryName={categoryName}
+          selectedAnswer={selectedAnswer}
+          showFeedback={showFeedback}
+          timerKey={timerKey}
+          onAnswer={handleAnswerKey}
+          onTimeUp={handleTimeUp}
+          onQuit={resetToMenu}
+        />
+      </>
     )
   }
 
@@ -228,14 +233,17 @@ export default function Home() {
     : selectedCategory?.name[lang] ?? ""
 
   return (
-    <ResultsScreen
-      lang={lang}
-      answers={answers}
-      categoryName={categoryName}
-      totalElapsedMs={elapsedMs}
-      bestStreak={bestStreak}
-      onPlayAgain={() => (isRandomMix ? startRandomMix() : selectedCategory && startGame(selectedCategory))}
-      onChooseAnother={resetToMenu}
-    />
+    <>
+      <ThemeMount />
+      <ResultsScreen
+        lang={lang}
+        answers={answers}
+        categoryName={categoryName}
+        totalElapsedMs={elapsedMs}
+        bestStreak={bestStreak}
+        onPlayAgain={() => (isRandomMix ? startRandomMix() : selectedCategory && startGame(selectedCategory))}
+        onChooseAnother={resetToMenu}
+      />
+    </>
   )
 }

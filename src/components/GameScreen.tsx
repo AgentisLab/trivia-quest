@@ -82,7 +82,7 @@ export default function GameScreen({
         className="relative"
         style={{
           height: 3,
-          background: "rgba(255,255,255,0.08)",
+          background: "var(--timer-track)",
           overflow: "hidden",
           marginTop: "env(safe-area-inset-top, 0px)",
         }}
@@ -335,7 +335,7 @@ function QuitSheet({ title, body, confirmLabel, cancelLabel, onConfirm, onCancel
     <div
       className="fade-in fixed inset-0 z-50 flex items-end justify-center"
       style={{
-        background: "rgba(0,0,0,0.55)",
+        background: "var(--sheet-scrim)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
       }}

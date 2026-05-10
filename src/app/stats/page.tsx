@@ -8,6 +8,7 @@ import { loadLang, saveLang } from "@/lib/preferences"
 import { TriviaStats, emptyStats, loadStats } from "@/lib/stats"
 import LangToggle from "@/components/LangToggle"
 import TabBar from "@/components/TabBar"
+import ThemeMount from "@/components/ThemeMount"
 
 export default function StatsPage() {
   const [hydrated, setHydrated] = useState(false)
@@ -38,6 +39,7 @@ export default function StatsPage() {
 
   return (
     <>
+      <ThemeMount />
       <div
         className="min-h-screen"
         style={{ background: "var(--bg-0)", color: "var(--ink-100)" }}
@@ -121,7 +123,7 @@ export default function StatsPage() {
                           style={{
                             height: 3,
                             borderRadius: 2,
-                            background: "rgba(255,255,255,0.08)",
+                            background: "var(--timer-track)",
                             overflow: "hidden",
                           }}
                         >

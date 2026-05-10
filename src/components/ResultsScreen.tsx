@@ -200,7 +200,7 @@ export default function ResultsScreen({
             height: 52,
             borderRadius: 14,
             background: "var(--accent)",
-            color: "#fff",
+            color: "var(--on-accent)",
             fontFamily: "var(--font-display)",
             fontSize: 16,
             fontWeight: 600,
@@ -303,7 +303,7 @@ function BarRow({
         style={{
           height: 4,
           borderRadius: 2,
-          background: "rgba(255,255,255,0.08)",
+          background: "var(--timer-track)",
           overflow: "hidden",
         }}
       >

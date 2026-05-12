@@ -1,11 +1,13 @@
 import { Lang } from "@/data/types"
 
 export type GameLength = 5 | 10 | 20
+export type Difficulty = "mixte" | "easy" | "medium" | "hard"
 export type ThemePreference = "system" | "light" | "dark"
 export type ResolvedTheme = "light" | "dark"
 
 const LANG_KEY = "trivia-lang"
 const LENGTH_KEY = "trivia-game-length"
+const DIFFICULTY_KEY = "trivia-difficulty"
 const SOUND_KEY = "trivia-sound"
 const HAPTICS_KEY = "trivia-haptics"
 const THEME_KEY = "trivia-theme"
@@ -20,6 +22,9 @@ export const THEME_COLOR: Record<ResolvedTheme, string> = {
 
 export const DEFAULT_GAME_LENGTH: GameLength = 10
 export const GAME_LENGTHS: GameLength[] = [5, 10, 20]
+
+export const DEFAULT_DIFFICULTY: Difficulty = "mixte"
+export const DIFFICULTIES: Difficulty[] = ["mixte", "easy", "medium", "hard"]
 
 export function loadLang(): Lang {
   if (typeof window === "undefined") return "en"
@@ -42,6 +47,17 @@ export function loadGameLength(): GameLength {
 export function saveGameLength(length: GameLength): void {
   if (typeof window === "undefined") return
   localStorage.setItem(LENGTH_KEY, String(length))
+}
+
+export function loadDifficulty(): Difficulty {
+  if (typeof window === "undefined") return DEFAULT_DIFFICULTY
+  const saved = localStorage.getItem(DIFFICULTY_KEY)
+  return DIFFICULTIES.includes(saved as Difficulty) ? (saved as Difficulty) : DEFAULT_DIFFICULTY
+}
+
+export function saveDifficulty(difficulty: Difficulty): void {
+  if (typeof window === "undefined") return
+  localStorage.setItem(DIFFICULTY_KEY, difficulty)
 }
 
 export function loadBoolPref(key: typeof SOUND_KEY | typeof HAPTICS_KEY): boolean {

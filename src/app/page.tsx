@@ -5,9 +5,12 @@ import { categories, Category, Question, Lang } from "@/data/questions"
 import { ui } from "@/data/ui-strings"
 import {
   GameLength,
+  Difficulty,
   loadLang,
   loadGameLength,
   saveGameLength,
+  loadDifficulty,
+  saveDifficulty,
   getRandomMixSplit,
   triggerHaptic,
 } from "@/lib/preferences"
@@ -38,12 +41,24 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled
 }
 
-function getRandomMixQuestions(): Question[] {
+/** Filter questions by the user-selected difficulty.
+ *  "mixte" = all, "easy" = easy only, "medium" = medium only, "hard" = hard + expert */
+function filterByDifficulty(qs: Question[], diff: Difficulty): Question[] {
+  if (diff === "mixte") return qs
+  if (diff === "hard") return qs.filter((q) => q.difficulty === "hard" || q.difficulty === "expert")
+  return qs.filter((q) => q.difficulty === diff)
+}
+
+function getRandomMixQuestions(diff: Difficulty): Question[] {
+  const all = filterByDifficulty(categories.flatMap((c) => c.questions), diff)
+  if (diff !== "mixte") {
+    return shuffleArray(all).slice(0, RANDOM_MIX_LENGTH)
+  }
+  // balanced split across difficulties
   const split = getRandomMixSplit(RANDOM_MIX_LENGTH)
-  const all = categories.flatMap((c) => c.questions)
   const pool: Question[] = []
-  ;(["easy", "medium", "hard", "expert"] as const).forEach((diff) => {
-    pool.push(...shuffleArray(all.filter((q) => q.difficulty === diff)).slice(0, split[diff]))
+  ;(["easy", "medium", "hard", "expert"] as const).forEach((d) => {
+    pool.push(...shuffleArray(all.filter((q) => q.difficulty === d)).slice(0, split[d]))
   })
   return shuffleArray(pool)
 }
@@ -52,6 +67,7 @@ export default function Home() {
   const [hydrated, setHydrated] = useState(false)
   const [lang, setLang] = useState<Lang>("en")
   const [gameLength, setGameLength] = useState<GameLength>(10)
+  const [difficulty, setDifficulty] = useState<Difficulty>("mixte")
   const [gameState, setGameState] = useState<GameState>("menu")
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null)
   const [isRandomMix, setIsRandomMix] = useState(false)
@@ -69,6 +85,7 @@ export default function Home() {
   useEffect(() => {
     setLang(loadLang())
     setGameLength(loadGameLength())
+    setDifficulty(loadDifficulty())
     setHydrated(true)
     const onStorage = (e: StorageEvent) => {
       if (e.key === "trivia-lang") setLang(loadLang())
@@ -82,6 +99,11 @@ export default function Home() {
   const handleGameLengthChange = (next: GameLength) => {
     setGameLength(next)
     saveGameLength(next)
+  }
+
+  const handleDifficultyChange = (next: Difficulty) => {
+    setDifficulty(next)
+    saveDifficulty(next)
   }
 
   const beginRound = (qs: Question[]) => {
@@ -99,14 +121,15 @@ export default function Home() {
   }
 
   const startGame = (category: Category) => {
-    const shuffled = shuffleArray(category.questions).slice(0, gameLength)
+    const filtered = filterByDifficulty(category.questions, difficulty)
+    const shuffled = shuffleArray(filtered).slice(0, gameLength)
     setSelectedCategory(category)
     setIsRandomMix(false)
     beginRound(shuffled)
   }
 
   const startRandomMix = () => {
-    const mixed = getRandomMixQuestions()
+    const mixed = getRandomMixQuestions(difficulty)
     setSelectedCategory(null)
     setIsRandomMix(true)
     beginRound(mixed)
@@ -192,7 +215,9 @@ export default function Home() {
         <MenuScreen
           lang={lang}
           gameLength={gameLength}
+          difficulty={difficulty}
           onGameLengthChange={handleGameLengthChange}
+          onDifficultyChange={handleDifficultyChange}
           onSelectCategory={startGame}
           onRandomMix={startRandomMix}
           randomMixCount={RANDOM_MIX_LENGTH}

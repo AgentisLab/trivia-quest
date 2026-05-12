@@ -51,6 +51,14 @@ export const ui: Record<string, Record<Lang, string>> = {
   gameLengthPickerLabel: { en: "Questions per round", fr: "Questions par partie" },
   kickerLength: { en: "ROUND LENGTH", fr: "LONGUEUR DE LA PARTIE" },
 
+  // Difficulty
+  kickerDifficulty: { en: "DIFFICULTY", fr: "DIFFICULTÉ" },
+  difficultyPickerLabel: { en: "Question difficulty", fr: "Difficulté des questions" },
+  diffMixte: { en: "Mixte", fr: "Mixte" },
+  diffEasy: { en: "Easy", fr: "Facile" },
+  diffMed: { en: "Med", fr: "Moyen" },
+  diffHard: { en: "Hard", fr: "Difficile" },
+
   // Game
   question: { en: "Question", fr: "Question" },
   of: { en: "of", fr: "sur" },

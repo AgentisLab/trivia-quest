@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { Lang } from "@/data/types"
 import { Category, categories } from "@/data/questions"
 import { ui } from "@/data/ui-strings"
-import { GameLength, GAME_LENGTHS } from "@/lib/preferences"
+import { GameLength, GAME_LENGTHS, Difficulty, DIFFICULTIES } from "@/lib/preferences"
 import { TriviaStats, emptyStats, loadStats } from "@/lib/stats"
 import LiveActivityPill from "./LiveActivityPill"
 import SegmentedControl from "./SegmentedControl"
@@ -12,7 +12,9 @@ import SegmentedControl from "./SegmentedControl"
 interface Props {
   lang: Lang
   gameLength: GameLength
+  difficulty: Difficulty
   onGameLengthChange: (length: GameLength) => void
+  onDifficultyChange: (difficulty: Difficulty) => void
   onSelectCategory: (cat: Category) => void
   onRandomMix: () => void
   randomMixCount: number
@@ -52,10 +54,19 @@ function formatRelative(ms: number, lang: Lang, t: (key: string) => string): str
   return `${t("metaLastPlayedPrefix")} ${n}${unit} ${t("metaLastPlayedSuffix")}`
 }
 
+const DIFF_LABEL_KEYS: Record<Difficulty, string> = {
+  mixte: "diffMixte",
+  easy: "diffEasy",
+  medium: "diffMed",
+  hard: "diffHard",
+}
+
 export default function MenuScreen({
   lang,
   gameLength,
+  difficulty,
   onGameLengthChange,
+  onDifficultyChange,
   onSelectCategory,
   onRandomMix,
   randomMixCount,
@@ -121,6 +132,19 @@ export default function MenuScreen({
               value={gameLength}
               onChange={onGameLengthChange}
               options={GAME_LENGTHS.map((n) => ({ value: n, label: String(n) }))}
+            />
+          </div>
+        </div>
+
+        {/* Difficulty picker */}
+        <div className="mt-5 mb-2">
+          <Kicker>{t("kickerDifficulty")}</Kicker>
+          <div className="mt-3">
+            <SegmentedControl
+              ariaLabel={t("difficultyPickerLabel")}
+              value={difficulty}
+              onChange={onDifficultyChange}
+              options={DIFFICULTIES.map((d) => ({ value: d, label: t(DIFF_LABEL_KEYS[d]) }))}
             />
           </div>
         </div>
